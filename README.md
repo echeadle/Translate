@@ -99,6 +99,13 @@ Available configuration options:
 - Python >= 3.11
 - Dependencies managed via `uv`
 
+## Documentation
+
+- **Quick Start**: [QUICK_START.md](QUICK_START.md)
+- **Usage Guide**: [docs/USAGE_GUIDE.md](docs/USAGE_GUIDE.md)
+- **Developer Guide**: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
+- **Project Structure**: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
 ## License
 
 MIT

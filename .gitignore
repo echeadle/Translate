@@ -34,6 +34,9 @@ venv.bak/
 output/
 examples/converted/
 
+# Claude Code local configurations
+.claude/*.local.md
+
 # IDEs
 .vscode/
 .idea/
