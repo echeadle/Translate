@@ -35,7 +35,7 @@ class Config:
         """
         # Load .env file if it exists
         if env_file:
-            load_dotenv(env_file)
+            load_dotenv(env_file, override=True)
         else:
             load_dotenv()
 
