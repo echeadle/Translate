@@ -104,3 +104,53 @@ class TestImageSupport:
         converter.convert_file(md_file, output_file)
 
         assert output_file.exists()
+
+    def test_image_path_with_spaces(self, converter, temp_workspace):
+        """Test images with spaces in filename."""
+        input_dir = temp_workspace / "input"
+        images_dir = input_dir / "images"
+        images_dir.mkdir()
+
+        fixtures_dir = Path(__file__).parent / "fixtures"
+        img_with_space = images_dir / "image with spaces.png"
+        copy(fixtures_dir / "images" / "sample.png", img_with_space)
+
+        md_file = input_dir / "test.md"
+        md_file.write_text("# Test\n\n![Image](images/image with spaces.png)")
+
+        output_file = temp_workspace / "output" / "test.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()
+
+    def test_nested_image_path(self, converter, temp_workspace):
+        """Test images in nested directories."""
+        input_dir = temp_workspace / "input"
+        images_dir = input_dir / "assets" / "images"
+        images_dir.mkdir(parents=True)
+
+        fixtures_dir = Path(__file__).parent / "fixtures"
+        copy(fixtures_dir / "images" / "sample.png", images_dir / "sample.png")
+
+        md_file = input_dir / "test.md"
+        md_file.write_text("# Test\n\n![Image](assets/images/sample.png)")
+
+        output_file = temp_workspace / "output" / "test.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()
+
+    def test_missing_image_error_message(self, converter, temp_workspace):
+        """Test that error message includes helpful context."""
+        input_dir = temp_workspace / "input"
+        md_file = input_dir / "document.md"
+        md_file.write_text("# Test\n\n![Missing](missing.png)")
+
+        output_file = temp_workspace / "output" / "test.pdf"
+
+        with pytest.raises(InvalidMarkdownError) as exc_info:
+            converter.convert_file(md_file, output_file)
+
+        error_msg = str(exc_info.value)
+        assert "missing.png" in error_msg
+        assert "document.md" in error_msg
