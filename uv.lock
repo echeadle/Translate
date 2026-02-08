@@ -375,6 +375,11 @@ dev = [
     { name = "pytest-mock" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pillow" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "markdown", specifier = ">=3.5" },
@@ -387,6 +392,9 @@ requires-dist = [
     { name = "weasyprint", specifier = ">=60.0" },
 ]
 provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pillow", specifier = ">=12.1.0" }]
 
 [[package]]
 name = "mdurl"
