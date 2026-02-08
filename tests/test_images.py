@@ -1,6 +1,7 @@
 """Tests for image path resolution in markdown."""
 
 from pathlib import Path
+from shutil import copy
 import pytest
 from md2pdf.converter import MarkdownConverter, InvalidMarkdownError
 
@@ -16,7 +17,6 @@ class TestImageSupport:
         images_dir.mkdir()
 
         # Copy test image
-        from shutil import copy
         fixtures_dir = Path(__file__).parent / "fixtures"
         copy(fixtures_dir / "images" / "sample.png", images_dir / "sample.png")
 
@@ -31,7 +31,8 @@ class TestImageSupport:
 
         # Verify
         assert output_file.exists()
-        assert output_file.stat().st_size > 1000  # Should be larger with image
+        # Minimum size check: PDF with embedded PNG should be >1KB
+        assert output_file.stat().st_size > 1000
 
     def test_missing_image_fails(self, converter, temp_workspace):
         """Test that missing images cause conversion to fail."""
@@ -50,7 +51,6 @@ class TestImageSupport:
         images_dir = input_dir / "images"
         images_dir.mkdir()
 
-        from shutil import copy
         fixtures_dir = Path(__file__).parent / "fixtures"
         copy(fixtures_dir / "images" / "sample.png", images_dir / "sample.png")
         copy(fixtures_dir / "images" / "diagram.jpg", images_dir / "diagram.jpg")
@@ -66,14 +66,14 @@ class TestImageSupport:
         converter.convert_file(md_file, output_file)
 
         assert output_file.exists()
-        assert output_file.stat().st_size > 2000  # Larger with two images
+        # Minimum size check: PDF with two embedded images should be >2KB
+        assert output_file.stat().st_size > 2000
 
     def test_absolute_path_image(self, converter, temp_workspace):
         """Test that absolute paths work."""
         input_dir = temp_workspace / "input"
 
         # Create image at absolute path
-        from shutil import copy
         fixtures_dir = Path(__file__).parent / "fixtures"
         abs_image = temp_workspace / "absolute_image.png"
         copy(fixtures_dir / "images" / "sample.png", abs_image)
@@ -82,6 +82,25 @@ class TestImageSupport:
         md_file.write_text(f"# Test\n\n![Absolute]({abs_image})")
 
         output_file = temp_workspace / "output" / "test.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()
+
+    def test_convert_with_fixture_file(self, converter, temp_workspace):
+        """Test converting the with_images.md fixture."""
+        # Copy fixture and images
+        fixtures_dir = Path(__file__).parent / "fixtures"
+        input_dir = temp_workspace / "input"
+        images_dir = input_dir / "images"
+        images_dir.mkdir()
+
+        copy(fixtures_dir / "with_images.md", input_dir / "with_images.md")
+        copy(fixtures_dir / "images" / "sample.png", images_dir / "sample.png")
+        copy(fixtures_dir / "images" / "diagram.jpg", images_dir / "diagram.jpg")
+
+        md_file = input_dir / "with_images.md"
+        output_file = temp_workspace / "output" / "with_images.pdf"
+
         converter.convert_file(md_file, output_file)
 
         assert output_file.exists()
