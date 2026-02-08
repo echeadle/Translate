@@ -239,6 +239,49 @@ find docs/ -name "*.md"
 uv run md2pdf docs/ --create-output-dir auto
 ```
 
+## Using Images in Markdown
+
+md2pdf supports embedding images in your PDFs. Images are automatically embedded in the PDF, making the output fully portable.
+
+### Relative Paths
+
+Image paths are resolved relative to the markdown file location:
+
+```markdown
+# My Document
+
+![Architecture Diagram](images/architecture.png)
+![Screenshot](screenshots/example.jpg)
+```
+
+If your markdown is at `/docs/report.md`, the images will be resolved from:
+- `/docs/images/architecture.png`
+- `/docs/screenshots/example.jpg`
+
+### Absolute Paths
+
+You can also use absolute paths:
+
+```markdown
+![Logo](/home/user/assets/logo.png)
+```
+
+### Supported Formats
+
+All image formats supported by weasyprint work:
+- PNG (recommended for diagrams and screenshots)
+- JPEG (good for photos)
+- SVG (if supported by your weasyprint installation)
+- GIF
+
+### Error Handling
+
+If an image is missing, conversion will fail with a clear error:
+
+```
+InvalidMarkdownError: Image not found: images/missing.png (referenced in /path/to/document.md)
+```
+
 ## Getting Help
 
 ```bash

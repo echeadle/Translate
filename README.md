@@ -112,6 +112,7 @@ See [docs/TESTING.md](docs/TESTING.md) for detailed testing guide.
 - Tables
 - Blockquotes
 - Horizontal rules
+- **Images** - Embed images from local files (relative or absolute paths)
 
 ## Requirements
 
