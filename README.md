@@ -82,6 +82,25 @@ Available configuration options:
 - **DEFAULT_OUTPUT_DIR**: Default output directory (default: output)
 - **PRESERVE_DIRECTORY_STRUCTURE**: Preserve subdirectories (default: true)
 
+## Testing
+
+This project includes a comprehensive test suite with 80%+ code coverage.
+
+### Run Tests
+
+```bash
+# All tests
+uv run pytest
+
+# With coverage
+uv run pytest --cov=src/md2pdf --cov-report=term-missing
+
+# Verbose output
+uv run pytest -v
+```
+
+See [docs/TESTING.md](docs/TESTING.md) for detailed testing guide.
+
 ## Supported Markdown Features
 
 - Headers (h1-h6)
