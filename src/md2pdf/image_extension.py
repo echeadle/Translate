@@ -89,6 +89,8 @@ class ImagePathExtension(Extension):
     def extendMarkdown(self, md: "Markdown") -> None:
         """Register the image path processor.
 
+        Note: Method name uses camelCase per python-markdown Extension API requirement.
+
         Args:
             md: Markdown instance to extend.
         """
