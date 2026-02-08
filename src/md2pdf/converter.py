@@ -39,14 +39,13 @@ class MarkdownConverter:
             config: Configuration settings for PDF generation.
         """
         self.config = config
-        self.md = markdown.Markdown(
-            extensions=[
-                "fenced_code",
-                "tables",
-                "codehilite",
-                "nl2br",
-            ]
-        )
+        # Store base extensions; create Markdown instance per file
+        self.base_extensions = [
+            "fenced_code",
+            "tables",
+            "codehilite",
+            "nl2br",
+        ]
         self.css = get_default_css(config)
 
     def convert_file(self, input_path: Path, output_path: Path) -> None:
@@ -69,13 +68,26 @@ class MarkdownConverter:
             raise InvalidMarkdownError(f"Error reading {input_path}: {e}")
 
         try:
+            # Create markdown instance with image extension
+            from md2pdf.image_extension import ImagePathExtension
+
+            image_ext = ImagePathExtension(source_file=input_path)
+
+            # Combine base extensions with the image extension
+            all_extensions = self.base_extensions.copy()
+            all_extensions.append(image_ext)
+
+            md = markdown.Markdown(
+                extensions=all_extensions,
+                extension_configs={},
+            )
+
             # Convert markdown to HTML
-            html_body = self.md.convert(markdown_content)
-            self.md.reset()  # Reset parser state for next conversion
+            html_body = md.convert(markdown_content)
+            md.reset()  # Reset parser state
 
             # Create complete HTML document
-            html_doc = f"""
-<!DOCTYPE html>
+            html_doc = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -89,10 +101,15 @@ class MarkdownConverter:
 </html>
 """
 
-            # Generate PDF
+            # Generate PDF (weasyprint embeds images by default)
             ensure_directory(output_path.parent)
-            HTML(string=html_doc).write_pdf(output_path)
+            HTML(string=html_doc, base_url=str(input_path.parent)).write_pdf(
+                output_path
+            )
 
+        except InvalidMarkdownError:
+            # Re-raise validation errors (including missing images)
+            raise
         except Exception as e:
             raise ConversionError(f"Error converting {input_path} to PDF: {e}")
 
