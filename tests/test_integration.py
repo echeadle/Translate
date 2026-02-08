@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from md2pdf.config import Config
 from md2pdf.converter import MarkdownConverter
 
@@ -213,3 +215,29 @@ End of document.
         # Should produce substantial PDF
         assert pdf_file.exists()
         assert pdf_file.stat().st_size > 2000
+
+
+class TestImageIntegration:
+    """Integration tests for image support."""
+
+    def test_full_workflow_with_images(self, converter, sample_markdown_files, temp_workspace):
+        """Test complete workflow: markdown with images -> PDF."""
+        if "with_images" not in sample_markdown_files:
+            pytest.skip("with_images.md fixture not available")
+
+        input_file = sample_markdown_files["with_images"]
+        output_file = temp_workspace / "output" / "with_images.pdf"
+
+        # Convert
+        converter.convert_file(input_file, output_file)
+
+        # Verify PDF created and is larger (has embedded images)
+        assert output_file.exists()
+
+        # PDF with images should be larger than text-only
+        simple_output = temp_workspace / "output" / "simple.pdf"
+        converter.convert_file(sample_markdown_files["simple"], simple_output)
+
+        # Image PDF should be noticeably larger (at least 500 bytes more)
+        # Note: Test images are small (100x100), so size difference is modest
+        assert output_file.stat().st_size > simple_output.stat().st_size + 500

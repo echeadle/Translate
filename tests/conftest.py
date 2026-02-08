@@ -40,12 +40,18 @@ def sample_markdown_files(temp_workspace):
 
     # Copy all non-nested fixtures
     for fixture_file in ["simple.md", "tables.md", "code_blocks.md",
-                          "complex.md", "empty.md", "invalid.md"]:
+                          "complex.md", "empty.md", "invalid.md", "with_images.md"]:
         src = fixtures_dir / fixture_file
         if src.exists():
             dst = input_dir / fixture_file
             shutil.copy(src, dst)
             files[fixture_file.replace(".md", "")] = dst
+
+    # Copy images directory if with_images.md is present
+    images_src = fixtures_dir / "images"
+    if images_src.exists():
+        images_dst = input_dir / "images"
+        shutil.copytree(images_src, images_dst)
 
     # Copy nested fixture
     nested_src = fixtures_dir / "nested" / "subdoc.md"
