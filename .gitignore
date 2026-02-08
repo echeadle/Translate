@@ -34,6 +34,11 @@ venv.bak/
 output/
 examples/converted/
 
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
 # Git worktrees
 .worktrees/
 
