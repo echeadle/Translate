@@ -102,3 +102,63 @@ PRESERVE_DIRECTORY_STRUCTURE=false
         # Defaults for rest
         assert config.margin_top == "2cm"
         assert config.font_family == "Arial, sans-serif"
+
+
+class TestDeprecationWarnings:
+    """Tests for deprecated .env settings."""
+
+    def test_font_family_deprecation_warning(self, tmp_path, clean_env, capsys):
+        """Test warning shown for PDF_FONT_FAMILY."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_FONT_FAMILY=Georgia, serif")
+
+        Config.load(env_file)
+
+        captured = capsys.readouterr()
+        assert "Deprecated" in captured.out or "deprecated" in captured.out.lower()
+        assert "PDF_FONT_FAMILY" in captured.out
+
+    def test_code_font_deprecation_warning(self, tmp_path, clean_env, capsys):
+        """Test warning shown for PDF_CODE_FONT."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_CODE_FONT=Monaco, monospace")
+
+        Config.load(env_file)
+
+        captured = capsys.readouterr()
+        assert "PDF_CODE_FONT" in captured.out
+
+    def test_font_size_deprecation_warning(self, tmp_path, clean_env, capsys):
+        """Test warning shown for PDF_FONT_SIZE."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_FONT_SIZE=14pt")
+
+        Config.load(env_file)
+
+        captured = capsys.readouterr()
+        assert "PDF_FONT_SIZE" in captured.out
+
+    def test_multiple_deprecation_warnings(self, tmp_path, clean_env, capsys):
+        """Test warning shows all deprecated settings."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("""PDF_FONT_FAMILY=Georgia
+PDF_CODE_FONT=Monaco
+PDF_FONT_SIZE=14pt""")
+
+        Config.load(env_file)
+
+        captured = capsys.readouterr()
+        assert "PDF_FONT_FAMILY" in captured.out
+        assert "PDF_CODE_FONT" in captured.out
+        assert "PDF_FONT_SIZE" in captured.out
+
+    def test_no_warning_for_valid_settings(self, tmp_path, clean_env, capsys):
+        """Test no warning for non-deprecated settings."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_PAGE_SIZE=A4")
+
+        Config.load(env_file)
+
+        captured = capsys.readouterr()
+        # Should not contain deprecation warning
+        assert "Deprecated" not in captured.out or captured.out == ""

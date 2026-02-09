@@ -39,7 +39,26 @@ class Config:
         else:
             load_dotenv()
 
-        # Load with defaults
+        # Check for deprecated settings
+        deprecated_settings = []
+        if os.getenv("PDF_FONT_FAMILY"):
+            deprecated_settings.append("PDF_FONT_FAMILY")
+        if os.getenv("PDF_CODE_FONT"):
+            deprecated_settings.append("PDF_CODE_FONT")
+        if os.getenv("PDF_FONT_SIZE"):
+            deprecated_settings.append("PDF_FONT_SIZE")
+
+        if deprecated_settings:
+            # Import here to avoid circular dependency
+            from rich.console import Console
+
+            console = Console()
+            console.print(
+                f"[yellow]⚠️  Deprecated:[/yellow] {', '.join(deprecated_settings)} "
+                f"in .env will be ignored. Use --theme or --css instead."
+            )
+
+        # Load with defaults (still include deprecated settings in dataclass for backwards compat)
         return cls(
             page_size=os.getenv("PDF_PAGE_SIZE", "A4"),
             margin_top=os.getenv("PDF_MARGIN_TOP", "2cm"),
