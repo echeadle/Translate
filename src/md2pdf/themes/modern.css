@@ -1,0 +1,327 @@
+/* Modern Theme - Bold, Contemporary Design */
+
+/* Page Setup */
+@page {
+    size: letter;
+    margin: 0.75in;
+
+    @top-center {
+        content: string(heading);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 9pt;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    @bottom-right {
+        content: counter(page);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 9pt;
+        color: #64748b;
+        font-weight: 500;
+    }
+}
+
+/* Base Typography */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #1e293b;
+    background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 100%);
+}
+
+/* Headers - Bold and Colorful */
+h1 {
+    font-size: 32pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 24pt 0 16pt 0;
+    padding-bottom: 12pt;
+    border-bottom: 4px solid transparent;
+    border-image: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899) 1;
+    string-set: heading content();
+    letter-spacing: -0.02em;
+}
+
+h2 {
+    font-size: 24pt;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 20pt 0 12pt 0;
+    padding-left: 12pt;
+    border-left: 5px solid #3b82f6;
+    letter-spacing: -0.01em;
+}
+
+h3 {
+    font-size: 18pt;
+    font-weight: 600;
+    color: #059669;
+    margin: 16pt 0 10pt 0;
+    letter-spacing: -0.01em;
+}
+
+h4 {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #7c3aed;
+    margin: 14pt 0 8pt 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+h5 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #ea580c;
+    margin: 12pt 0 6pt 0;
+}
+
+h6 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #64748b;
+    margin: 10pt 0 6pt 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Paragraphs */
+p {
+    margin: 0 0 12pt 0;
+    text-align: justify;
+}
+
+/* Links - Vibrant Colors */
+a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 2px solid #93c5fd;
+    transition: all 0.2s;
+}
+
+a:hover {
+    color: #1d4ed8;
+    border-bottom-color: #3b82f6;
+}
+
+/* Lists - Colorful Markers */
+ul {
+    margin: 12pt 0;
+    padding-left: 24pt;
+}
+
+ul li {
+    margin: 6pt 0;
+    padding-left: 8pt;
+}
+
+ul li::marker {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+ol {
+    margin: 12pt 0;
+    padding-left: 24pt;
+}
+
+ol li {
+    margin: 6pt 0;
+    padding-left: 8pt;
+}
+
+ol li::marker {
+    color: #8b5cf6;
+    font-weight: 700;
+}
+
+/* Nested Lists */
+ul ul li::marker {
+    color: #10b981;
+}
+
+ul ul ul li::marker {
+    color: #f59e0b;
+}
+
+/* Code Blocks - Modern Dark Theme */
+pre {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8pt;
+    padding: 16pt;
+    margin: 12pt 0;
+    overflow-x: auto;
+    box-shadow: 0 4pt 6pt rgba(0, 0, 0, 0.1), 0 2pt 4pt rgba(0, 0, 0, 0.06);
+}
+
+code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 9.5pt;
+    background: #f1f5f9;
+    color: #3730a3;
+    padding: 2pt 6pt;
+    border-radius: 3pt;
+    font-weight: 500;
+}
+
+pre code {
+    background: transparent;
+    color: #e2e8f0;
+    padding: 0;
+    border-radius: 0;
+    font-weight: 400;
+}
+
+/* Blockquotes - Gradient Border */
+blockquote {
+    margin: 16pt 0;
+    padding: 12pt 16pt 12pt 20pt;
+    background: linear-gradient(to right, #eff6ff 0%, #ffffff 100%);
+    border-left: 5px solid transparent;
+    border-image: linear-gradient(to bottom, #3b82f6, #8b5cf6) 1;
+    font-style: italic;
+    color: #475569;
+    border-radius: 0 6pt 6pt 0;
+}
+
+blockquote p {
+    margin: 0;
+}
+
+/* Tables - Modern Grid */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16pt 0;
+    box-shadow: 0 4pt 6pt rgba(0, 0, 0, 0.1);
+    border-radius: 8pt;
+    overflow: hidden;
+}
+
+thead {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+th {
+    padding: 12pt;
+    text-align: left;
+    font-weight: 700;
+    color: #ffffff;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 9pt;
+}
+
+td {
+    padding: 10pt 12pt;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+}
+
+tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+tbody tr:nth-child(odd) {
+    background: #ffffff;
+}
+
+tbody tr:hover {
+    background: #eff6ff;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Horizontal Rule - Gradient */
+hr {
+    border: none;
+    height: 3pt;
+    background: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899);
+    margin: 24pt 0;
+    border-radius: 2pt;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 16pt auto;
+    border-radius: 8pt;
+    box-shadow: 0 10pt 15pt rgba(0, 0, 0, 0.1), 0 4pt 6pt rgba(0, 0, 0, 0.05);
+}
+
+/* Strong and Emphasis - Colorful */
+strong {
+    font-weight: 700;
+    color: #1e40af;
+}
+
+em {
+    font-style: italic;
+    color: #7c3aed;
+}
+
+/* Inline Code */
+p code,
+li code {
+    background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+    color: #4338ca;
+    font-weight: 600;
+}
+
+/* Definition Lists */
+dl {
+    margin: 12pt 0;
+}
+
+dt {
+    font-weight: 700;
+    color: #0f172a;
+    margin: 8pt 0 4pt 0;
+    font-size: 11.5pt;
+}
+
+dd {
+    margin: 0 0 8pt 20pt;
+    padding-left: 12pt;
+    border-left: 3px solid #3b82f6;
+}
+
+/* Page Breaks */
+h1, h2, h3 {
+    page-break-after: avoid;
+}
+
+pre, table, img {
+    page-break-inside: avoid;
+}
+
+/* Utility Classes */
+.page-break {
+    page-break-after: always;
+}
+
+.no-break {
+    page-break-inside: avoid;
+}
+
+/* Print Optimizations */
+@media print {
+    body {
+        background: white;
+    }
+
+    a {
+        color: #2563eb;
+        text-decoration: underline;
+    }
+}
