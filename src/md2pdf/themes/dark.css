@@ -1,0 +1,249 @@
+/* Dark Theme - Modern dark mode with GitHub dark color palette */
+
+@page {
+    size: Letter;
+    margin: 1in;
+    @bottom-center {
+        content: counter(page);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 10pt;
+        color: #8b949e;
+    }
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #e6edf3;
+    background-color: #0d1117;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    color: #e6edf3;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    page-break-after: avoid;
+}
+
+h1 {
+    font-size: 2em;
+    border-bottom: 2px solid #21262d;
+    padding-bottom: 0.3em;
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    border-bottom: 1px solid #21262d;
+    padding-bottom: 0.3em;
+}
+
+h3 {
+    font-size: 1.25em;
+}
+
+h4 {
+    font-size: 1em;
+}
+
+h5 {
+    font-size: 0.875em;
+}
+
+h6 {
+    font-size: 0.85em;
+    color: #8b949e;
+}
+
+/* Paragraphs and text */
+p {
+    margin-top: 0;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+
+/* Links */
+a {
+    color: #58a6ff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Code blocks */
+pre {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+}
+
+code {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    background-color: #161b22;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    color: #e6edf3;
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+}
+
+/* Blockquotes */
+blockquote {
+    border-left: 4px solid #30363d;
+    padding-left: 16px;
+    margin-left: 0;
+    color: #8b949e;
+    font-style: italic;
+    background-color: #161b22;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+}
+
+blockquote p {
+    margin: 0;
+}
+
+/* Lists */
+ul, ol {
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-left: 2em;
+}
+
+li {
+    margin-bottom: 0.25em;
+}
+
+li > p {
+    margin-bottom: 0.5em;
+}
+
+/* Tables */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+    background-color: #0d1117;
+}
+
+th, td {
+    border: 1px solid #30363d;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #161b22;
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+tr:nth-child(even) {
+    background-color: #161b22;
+}
+
+tr:hover {
+    background-color: #1c2128;
+}
+
+/* Horizontal rules */
+hr {
+    height: 0.25em;
+    padding: 0;
+    margin: 24px 0;
+    background-color: #21262d;
+    border: 0;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 16px auto;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+}
+
+/* Strong and emphasis */
+strong {
+    font-weight: 600;
+    color: #e6edf3;
+}
+
+em {
+    font-style: italic;
+}
+
+/* Inline code in lists */
+li code {
+    background-color: #161b22;
+    color: #e6edf3;
+}
+
+/* Task lists */
+input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+
+/* Definition lists */
+dt {
+    font-weight: 600;
+    margin-top: 16px;
+    color: #e6edf3;
+}
+
+dd {
+    margin-left: 0;
+    margin-bottom: 16px;
+    padding-left: 2em;
+}
+
+/* Strikethrough */
+del {
+    color: #8b949e;
+}
+
+/* Syntax highlighting hints */
+.highlight {
+    background-color: #161b22;
+}
+
+.code-header {
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 16px;
+    font-size: 0.85em;
+    color: #8b949e;
+}
+
+/* Print optimization */
+@media print {
+    body {
+        background-color: #0d1117;
+        color: #e6edf3;
+    }
+
+    a {
+        color: #58a6ff;
+    }
+}
