@@ -143,3 +143,46 @@ class TestMarkdownConverter:
         # At least the valid file should succeed
         successful = [r for r in results if r["success"]]
         assert len(successful) >= 1
+
+
+class TestConverterWithCSS:
+    """Tests for MarkdownConverter with custom CSS."""
+
+    def test_converter_with_css_string(self, mock_config, tmp_path):
+        """Test converter accepts CSS string parameter."""
+        custom_css = "body { font-size: 14pt; }"
+        converter = MarkdownConverter(mock_config, css=custom_css)
+
+        # Create test file
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test")
+
+        output_file = tmp_path / "output.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()
+
+    def test_converter_with_none_css(self, mock_config, tmp_path):
+        """Test converter with css=None uses default."""
+        converter = MarkdownConverter(mock_config, css=None)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test")
+
+        output_file = tmp_path / "output.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()
+
+    def test_converter_backwards_compatible(self, mock_config, tmp_path):
+        """Test converter still works without css parameter."""
+        # Old usage: MarkdownConverter(config)
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test")
+
+        output_file = tmp_path / "output.pdf"
+        converter.convert_file(md_file, output_file)
+
+        assert output_file.exists()

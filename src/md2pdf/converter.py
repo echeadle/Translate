@@ -32,11 +32,12 @@ class ConversionError(MD2PDFError):
 class MarkdownConverter:
     """Convert markdown files to PDF format."""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, css: Optional[str] = None):
         """Initialize the converter.
 
         Args:
             config: Configuration settings for PDF generation.
+            css: Optional complete CSS string (page + styling). If None, uses default.
         """
         self.config = config
         # Store base extensions; create Markdown instance per file
@@ -46,7 +47,13 @@ class MarkdownConverter:
             "codehilite",
             "nl2br",
         ]
-        self.css = get_default_css(config)
+
+        # Use provided CSS or generate default
+        if css is not None:
+            self.css = css
+        else:
+            # Backwards compatibility: generate default CSS
+            self.css = get_default_css(config)
 
     def convert_file(self, input_path: Path, output_path: Path) -> None:
         """Convert a single markdown file to PDF.

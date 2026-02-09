@@ -120,11 +120,8 @@ def main(
     page_css = get_page_css(config)
     final_css = page_css + style_css
 
-    # NOTE: Keep using old converter initialization for now
-    # Task 4 will update converter to accept css parameter
-
-    # Create converter
-    converter = MarkdownConverter(config)
+    # Create converter with custom CSS
+    converter = MarkdownConverter(config, css=final_css)
 
     # Handle create-output-dir option
     if create_output_dir is not None:
