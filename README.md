@@ -64,6 +64,37 @@ uv run md2pdf docs/ --output-dir pdfs/
 uv run md2pdf docs/ --no-preserve-structure
 ```
 
+### Using Themes
+
+Choose from 5 built-in themes:
+
+```bash
+# GitHub-flavored (default)
+uv run md2pdf document.md --theme github
+
+# Clean and minimal
+uv run md2pdf document.md --theme minimal
+
+# Academic paper style
+uv run md2pdf document.md --theme academic
+
+# Dark mode
+uv run md2pdf document.md --theme dark
+
+# Modern with colorful accents
+uv run md2pdf document.md --theme modern
+```
+
+### Custom CSS
+
+Use your own stylesheet:
+
+```bash
+uv run md2pdf document.md --css mystyle.css
+```
+
+**Note:** You cannot use `--theme` and `--css` together. Choose one or the other.
+
 ## Configuration
 
 Copy `.env.example` to `.env` and customize settings:
@@ -123,8 +154,10 @@ See [docs/TESTING.md](docs/TESTING.md) for detailed testing guide.
 
 - **Quick Start**: [QUICK_START.md](QUICK_START.md)
 - **Usage Guide**: [docs/USAGE_GUIDE.md](docs/USAGE_GUIDE.md)
+- **Themes Guide**: [docs/THEMES.md](docs/THEMES.md)
 - **Developer Guide**: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 - **Project Structure**: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+- **Testing Guide**: [docs/TESTING.md](docs/TESTING.md)
 
 ## License
 

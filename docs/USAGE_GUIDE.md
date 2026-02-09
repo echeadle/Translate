@@ -139,6 +139,46 @@ output/
     └── (all files flattened, no subdirs)
 ```
 
+## Styling Your PDFs
+
+### Using Built-in Themes
+
+md2pdf includes 5 professionally designed themes:
+
+```bash
+uv run md2pdf doc.md --theme github    # Default: clean, professional
+uv run md2pdf doc.md --theme minimal   # Spacious, simple
+uv run md2pdf doc.md --theme academic  # Formal, serif fonts
+uv run md2pdf doc.md --theme dark      # Dark mode
+uv run md2pdf doc.md --theme modern    # Bold, colorful
+```
+
+See [THEMES.md](THEMES.md) for detailed theme descriptions.
+
+### Custom CSS
+
+Use your own stylesheet:
+
+```bash
+uv run md2pdf doc.md --css custom.css
+```
+
+**Note:** Cannot use both `--theme` and `--css` together.
+
+### Page Setup
+
+Configure page size and margins in `.env`:
+
+```bash
+PDF_PAGE_SIZE=Letter
+PDF_MARGIN_TOP=2cm
+PDF_MARGIN_BOTTOM=2cm
+PDF_MARGIN_LEFT=2.5cm
+PDF_MARGIN_RIGHT=2.5cm
+```
+
+These settings apply to all themes and custom CSS.
+
 ## Configuration
 
 Create a `.env` file to customize PDF styling:
