@@ -2,7 +2,67 @@
 
 import pytest
 
-from md2pdf.styles import get_default_css
+from md2pdf.styles import get_page_css, get_default_css
+
+
+class TestPageCSS:
+    """Tests for get_page_css function."""
+
+    def test_get_page_css(self, mock_config):
+        """Test @page CSS generation from config."""
+        css = get_page_css(mock_config)
+
+        # Verify it's a string
+        assert isinstance(css, str)
+        assert len(css) > 0
+
+        # Must contain @page rule
+        assert "@page" in css
+
+        # Must contain page size
+        assert mock_config.page_size in css
+
+        # Must contain margins
+        assert mock_config.margin_top in css
+        assert mock_config.margin_bottom in css
+        assert mock_config.margin_left in css
+        assert mock_config.margin_right in css
+
+    def test_get_page_css_custom_values(self, mock_config):
+        """Test @page CSS with custom config values."""
+        mock_config.page_size = "Letter"
+        mock_config.margin_top = "3cm"
+        mock_config.margin_bottom = "3cm"
+        mock_config.margin_left = "2.5cm"
+        mock_config.margin_right = "2.5cm"
+
+        css = get_page_css(mock_config)
+
+        assert "Letter" in css
+        assert "3cm" in css
+        assert "2.5cm" in css
+
+    def test_get_page_css_no_body_styles(self, mock_config):
+        """Test @page CSS doesn't include body or other element styling."""
+        css = get_page_css(mock_config)
+
+        # Should ONLY have @page, not body/h1/code/table
+        assert "@page" in css
+        assert "body {" not in css and "body{" not in css
+        assert "h1 {" not in css and "h1{" not in css
+        assert "code {" not in css and "code{" not in css
+
+
+class TestLegacyCSS:
+    """Tests for backwards compatibility with get_default_css."""
+
+    def test_get_default_css_still_exists(self, mock_config):
+        """Test get_default_css still works for backwards compatibility."""
+        # This function should still exist but might be deprecated
+        css = get_default_css(mock_config)
+
+        assert isinstance(css, str)
+        assert len(css) > 0
 
 
 class TestStyles:
