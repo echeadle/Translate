@@ -12,6 +12,8 @@ from rich.table import Table
 
 from md2pdf.config import Config
 from md2pdf.converter import ConversionError, InvalidMarkdownError, MarkdownConverter
+from md2pdf.themes import get_theme_css, load_custom_css
+from md2pdf.styles import get_page_css
 
 console = Console()
 
@@ -44,6 +46,16 @@ def main(
         "--create-output-dir",
         "-c",
         help="Create a subdirectory for output files (use 'auto' for timestamp or provide a name)",
+    ),
+    theme: Optional[str] = typer.Option(
+        None,
+        "--theme",
+        help="Built-in theme (github, minimal, academic, dark, modern)",
+    ),
+    css: Optional[Path] = typer.Option(
+        None,
+        "--css",
+        help="Path to custom CSS file",
     ),
 ):
     """Convert markdown file(s) to PDF format.
@@ -81,6 +93,35 @@ def main(
     except ValueError as e:
         console.print(f"[red]Configuration error:[/red] {e}")
         sys.exit(2)
+
+    # Validate theme and css flags (mutually exclusive)
+    if theme and css:
+        console.print(
+            "[red]Error:[/red] Cannot use --theme and --css together.\n"
+            "Choose one:\n"
+            "  • --theme for built-in themes\n"
+            "  • --css for custom CSS files"
+        )
+        raise typer.Exit(1)
+
+    # Determine style source and generate CSS
+    try:
+        if css:
+            style_css = load_custom_css(css)
+        elif theme:
+            style_css = get_theme_css(theme)
+        else:
+            style_css = get_theme_css("github")  # default
+    except (ValueError, FileNotFoundError) as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+    # Generate complete CSS (page + styling)
+    page_css = get_page_css(config)
+    final_css = page_css + style_css
+
+    # NOTE: Keep using old converter initialization for now
+    # Task 4 will update converter to accept css parameter
 
     # Create converter
     converter = MarkdownConverter(config)
