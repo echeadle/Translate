@@ -57,6 +57,11 @@ def main(
         "--css",
         help="Path to custom CSS file",
     ),
+    page_numbers: Optional[bool] = typer.Option(
+        None,
+        "--page-numbers/--no-page-numbers",
+        help="Enable/disable page numbers in PDF footer (overrides .env)",
+    ),
 ):
     """Convert markdown file(s) to PDF format.
 
@@ -93,6 +98,10 @@ def main(
     except ValueError as e:
         console.print(f"[red]Configuration error:[/red] {e}")
         sys.exit(2)
+
+    # Apply CLI overrides to config
+    if page_numbers is not None:
+        config.enable_page_numbers = page_numbers
 
     # Validate theme and css flags (mutually exclusive)
     if theme and css:

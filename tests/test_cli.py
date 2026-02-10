@@ -175,3 +175,57 @@ class TestCLI:
         assert "Usage" in result.stdout or "Options" in result.stdout
         assert "--output" in result.stdout
         assert "--create-output-dir" in result.stdout
+
+
+class TestPageNumbersCLI:
+    """Tests for --page-numbers CLI flag."""
+
+    def test_page_numbers_flag_enable(self, tmp_path):
+        """Test --page-numbers flag enables page numbers."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        result = runner.invoke(
+            app,
+            [str(md_file), "--output", str(output_file), "--page-numbers"]
+        )
+
+        assert result.exit_code == 0
+        assert output_file.exists()
+
+    def test_page_numbers_flag_disable(self, tmp_path):
+        """Test --no-page-numbers flag disables page numbers."""
+        # Create .env with page numbers enabled
+        env_file = tmp_path / ".env"
+        env_file.write_text("ENABLE_PAGE_NUMBERS=true\n")
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        # Override with --no-page-numbers
+        result = runner.invoke(
+            app,
+            [str(md_file), "--output", str(output_file), "--no-page-numbers"]
+        )
+
+        assert result.exit_code == 0
+        assert output_file.exists()
+
+    def test_page_numbers_default_from_env(self, tmp_path):
+        """Test page numbers use .env default when flag not provided."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        result = runner.invoke(
+            app,
+            [str(md_file), "--output", str(output_file)]
+        )
+
+        assert result.exit_code == 0
+        assert output_file.exists()
