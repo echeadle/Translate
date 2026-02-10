@@ -264,8 +264,8 @@ class MarkdownConverter:
         for header in headers:
             css_class = f"toc-h{header['level']}"
             toc_html += f'        <li class="{css_class}">\n'
-            toc_html += f'            <a href="#{header["anchor_id"]}">{header["text"]}</a>\n'
-            toc_html += f'            <span class="toc-page">{header["page"]}</span>\n'
+            toc_html += f'            <a href="#{header["anchor_id"]}">{html.escape(header["text"])}</a>\n'
+            toc_html += f'            <span class="toc-page">{html.escape(str(header["page"]))}</span>\n'
             toc_html += '        </li>\n'
 
         toc_html += '    </ul>\n'

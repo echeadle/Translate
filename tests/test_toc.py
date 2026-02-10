@@ -111,3 +111,18 @@ class TestTOCGeneration:
         assert '<span class="toc-page">1</span>' in result
         assert '<span class="toc-page">5</span>' in result
         assert '<span class="toc-page">10</span>' in result
+
+    def test_generate_toc_html_escapes_html(self, converter):
+        """Test TOC HTML escapes special HTML characters."""
+        headers = [
+            {"text": "<script>alert('XSS')</script>", "level": 1, "page": 1, "anchor_id": "xss"},
+            {"text": "A & B < C > D", "level": 1, "page": 2, "anchor_id": "symbols"}
+        ]
+
+        html_output = converter.generate_toc_html(headers)
+
+        # Should have escaped HTML
+        assert "&lt;script&gt;" in html_output
+        assert "alert('XSS')" not in html_output
+        assert "&amp;" in html_output  # Ampersand escaped
+        assert "&lt;" in html_output and "&gt;" in html_output
