@@ -86,6 +86,10 @@ def mock_config():
         enable_page_numbers=False,
         page_number_position="center",
         page_number_format="Page {page} of {pages}",
+        pdf_title=None,
+        pdf_author=None,
+        pdf_subject=None,
+        pdf_keywords=None,
     )
 
 
@@ -124,6 +128,10 @@ def clean_env(monkeypatch):
         "ENABLE_PAGE_NUMBERS",
         "PAGE_NUMBER_POSITION",
         "PAGE_NUMBER_FORMAT",
+        "PDF_TITLE",
+        "PDF_AUTHOR",
+        "PDF_SUBJECT",
+        "PDF_KEYWORDS",
     ]
 
     for var in env_vars:

@@ -1,5 +1,5 @@
-# tests/test_page_numbers.py
-"""Tests for page number configuration."""
+# tests/test_phase4_config.py
+"""Tests for Phase 4 configuration (page numbers and metadata)."""
 
 import os
 import pytest
@@ -99,3 +99,72 @@ class TestPageNumbersConfig:
         config = Config.load(env_file)
 
         assert len(config.page_number_format) == 100
+
+
+class TestMetadataConfig:
+    """Tests for PDF metadata configuration."""
+
+    def test_metadata_defaults_empty(self, clean_env, tmp_path):
+        """Test metadata fields default to None/empty."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_title is None
+        assert config.pdf_author is None
+        assert config.pdf_subject is None
+        assert config.pdf_keywords is None
+
+    def test_metadata_title_loaded(self, clean_env, tmp_path):
+        """Test loading title from .env."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_TITLE=My Document\n")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_title == "My Document"
+
+    def test_metadata_author_loaded(self, clean_env, tmp_path):
+        """Test loading author from .env."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_AUTHOR=Jane Doe\n")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_author == "Jane Doe"
+
+    def test_metadata_subject_loaded(self, clean_env, tmp_path):
+        """Test loading subject from .env."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_SUBJECT=Technical Documentation\n")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_subject == "Technical Documentation"
+
+    def test_metadata_keywords_loaded(self, clean_env, tmp_path):
+        """Test loading keywords from .env."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("PDF_KEYWORDS=markdown, pdf, documentation\n")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_keywords == "markdown, pdf, documentation"
+
+    def test_metadata_all_fields(self, clean_env, tmp_path):
+        """Test loading all metadata fields together."""
+        env_file = tmp_path / ".env"
+        env_file.write_text("""
+PDF_TITLE=User Guide
+PDF_AUTHOR=Jane Doe
+PDF_SUBJECT=Product Documentation
+PDF_KEYWORDS=guide, manual, help
+""")
+
+        config = Config.load(env_file)
+
+        assert config.pdf_title == "User Guide"
+        assert config.pdf_author == "Jane Doe"
+        assert config.pdf_subject == "Product Documentation"
+        assert config.pdf_keywords == "guide, manual, help"

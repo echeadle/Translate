@@ -28,6 +28,12 @@ class Config:
     page_number_position: str = "center"  # left, center, right
     page_number_format: str = "Page {page} of {pages}"
 
+    # PDF Metadata (Phase 4)
+    pdf_title: Optional[str] = None
+    pdf_author: Optional[str] = None
+    pdf_subject: Optional[str] = None
+    pdf_keywords: Optional[str] = None
+
     @classmethod
     def load(cls, env_file: Optional[Path] = None) -> "Config":
         """Load configuration from environment variables.
@@ -81,6 +87,12 @@ class Config:
         if len(page_number_format) > 100:
             page_number_format = page_number_format[:100]
 
+        # Load PDF metadata
+        pdf_title = os.getenv("PDF_TITLE") or None
+        pdf_author = os.getenv("PDF_AUTHOR") or None
+        pdf_subject = os.getenv("PDF_SUBJECT") or None
+        pdf_keywords = os.getenv("PDF_KEYWORDS") or None
+
         # Load with defaults (still include deprecated settings in dataclass for backwards compat)
         return cls(
             page_size=os.getenv("PDF_PAGE_SIZE", "A4"),
@@ -97,6 +109,10 @@ class Config:
             enable_page_numbers=enable_page_numbers,
             page_number_position=page_number_position,
             page_number_format=page_number_format,
+            pdf_title=pdf_title,
+            pdf_author=pdf_author,
+            pdf_subject=pdf_subject,
+            pdf_keywords=pdf_keywords,
         )
 
     def validate(self) -> None:
