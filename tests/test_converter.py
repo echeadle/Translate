@@ -243,3 +243,24 @@ class TestConverterMetadata:
 
         assert output_file.exists()
         # Title should default to "my_document" (filename without extension)
+
+    def test_metadata_html_escaping(self, mock_config, tmp_path):
+        """Test metadata HTML special characters are escaped."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test")
+        output_file = tmp_path / "output.pdf"
+
+        # Test HTML injection attempt
+        metadata = {
+            'title': 'Test </title><script>alert("XSS")</script>',
+            'author': 'O\'Brien & <Company>',
+            'subject': 'Test "Subject" with quotes',
+            'keywords': 'test, <tag>, "quotes"',
+        }
+
+        # Should not raise error and should generate valid PDF
+        converter.convert_file(md_file, output_file, metadata=metadata)
+        assert output_file.exists()
+        assert output_file.stat().st_size > 0

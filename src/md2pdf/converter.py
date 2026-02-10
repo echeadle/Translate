@@ -1,5 +1,6 @@
 """Core markdown to PDF conversion logic."""
 
+import html
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -120,7 +121,7 @@ class MarkdownConverter:
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{pdf_metadata['title']}</title>
+    <title>{html.escape(pdf_metadata['title'], quote=True)}</title>
     <style>
         {self.css}
     </style>
