@@ -1,8 +1,9 @@
 """Core markdown to PDF conversion logic."""
 
 import html
+import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import markdown
 from weasyprint import HTML
@@ -199,3 +200,75 @@ class MarkdownConverter:
             results.append(result)
 
         return results
+
+    def generate_anchor_id(self, text: str, seen_ids: Set[str]) -> str:
+        """Generate unique anchor ID from heading text.
+
+        Args:
+            text: Heading text to convert to anchor ID.
+            seen_ids: Set of already-used IDs to avoid duplicates.
+
+        Returns:
+            Unique anchor ID string.
+        """
+        # Convert to lowercase
+        base_id = text.lower()
+
+        # Replace spaces with hyphens
+        base_id = base_id.replace(" ", "-")
+
+        # Remove special characters (keep only alphanumeric and hyphens)
+        base_id = re.sub(r'[^a-z0-9-]', '', base_id)
+
+        # Remove consecutive hyphens
+        base_id = re.sub(r'-+', '-', base_id)
+
+        # Remove leading/trailing hyphens
+        base_id = base_id.strip('-')
+
+        # Handle empty result
+        if not base_id:
+            base_id = "heading"
+
+        # Handle duplicates
+        if base_id not in seen_ids:
+            seen_ids.add(base_id)
+            return base_id
+
+        # Append counter for duplicates
+        counter = 2
+        while f"{base_id}-{counter}" in seen_ids:
+            counter += 1
+
+        unique_id = f"{base_id}-{counter}"
+        seen_ids.add(unique_id)
+        return unique_id
+
+    def generate_toc_html(self, headers: List[Dict[str, Any]]) -> str:
+        """Generate HTML for table of contents.
+
+        Args:
+            headers: List of header dicts from extract_headers().
+                Each dict has keys: text, level, page, anchor_id
+
+        Returns:
+            HTML string for TOC, or empty string if no headers.
+        """
+        if not headers:
+            return ""
+
+        toc_html = '<div class="toc">\n'
+        toc_html += '    <h1>Table of Contents</h1>\n'
+        toc_html += '    <ul>\n'
+
+        for header in headers:
+            css_class = f"toc-h{header['level']}"
+            toc_html += f'        <li class="{css_class}">\n'
+            toc_html += f'            <a href="#{header["anchor_id"]}">{header["text"]}</a>\n'
+            toc_html += f'            <span class="toc-page">{header["page"]}</span>\n'
+            toc_html += '        </li>\n'
+
+        toc_html += '    </ul>\n'
+        toc_html += '</div>\n'
+
+        return toc_html
