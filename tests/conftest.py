@@ -83,6 +83,9 @@ def mock_config():
         code_font="Courier, monospace",
         default_output_dir="output",
         preserve_structure=True,
+        enable_page_numbers=False,
+        page_number_position="center",
+        page_number_format="Page {page} of {pages}",
     )
 
 
@@ -118,6 +121,9 @@ def clean_env(monkeypatch):
         "PDF_CODE_FONT",
         "DEFAULT_OUTPUT_DIR",
         "PRESERVE_DIRECTORY_STRUCTURE",
+        "ENABLE_PAGE_NUMBERS",
+        "PAGE_NUMBER_POSITION",
+        "PAGE_NUMBER_FORMAT",
     ]
 
     for var in env_vars:

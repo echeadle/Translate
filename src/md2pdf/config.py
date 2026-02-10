@@ -23,6 +23,11 @@ class Config:
     default_output_dir: str
     preserve_structure: bool
 
+    # Page Numbers (Phase 4)
+    enable_page_numbers: bool = False
+    page_number_position: str = "center"  # left, center, right
+    page_number_format: str = "Page {page} of {pages}"
+
     @classmethod
     def load(cls, env_file: Optional[Path] = None) -> "Config":
         """Load configuration from environment variables.
@@ -58,6 +63,24 @@ class Config:
                 f"in .env will be ignored. Use --theme or --css instead."
             )
 
+        # Load page number settings
+        enable_page_numbers_str = os.getenv("ENABLE_PAGE_NUMBERS", "false").lower()
+        enable_page_numbers = enable_page_numbers_str == "true"
+
+        page_number_position = os.getenv("PAGE_NUMBER_POSITION", "center")
+        # Validate position
+        valid_positions = ["left", "center", "right"]
+        if page_number_position not in valid_positions:
+            raise ValueError(
+                f"PAGE_NUMBER_POSITION must be one of: {', '.join(valid_positions)}. "
+                f"Got: {page_number_position}"
+            )
+
+        page_number_format = os.getenv("PAGE_NUMBER_FORMAT", "Page {page} of {pages}")
+        # Truncate long format strings
+        if len(page_number_format) > 100:
+            page_number_format = page_number_format[:100]
+
         # Load with defaults (still include deprecated settings in dataclass for backwards compat)
         return cls(
             page_size=os.getenv("PDF_PAGE_SIZE", "A4"),
@@ -71,6 +94,9 @@ class Config:
             default_output_dir=os.getenv("DEFAULT_OUTPUT_DIR", "output"),
             preserve_structure=os.getenv("PRESERVE_DIRECTORY_STRUCTURE", "true").lower()
             == "true",
+            enable_page_numbers=enable_page_numbers,
+            page_number_position=page_number_position,
+            page_number_format=page_number_format,
         )
 
     def validate(self) -> None:
