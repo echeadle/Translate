@@ -99,35 +99,29 @@ class MarkdownConverter:
             html_body = md.convert(markdown_content)
             md.reset()  # Reset parser state
 
-            # Build PDF metadata with smart defaults
+            # Build PDF metadata dict with smart defaults
+            pdf_metadata = {}
+
             if metadata:
                 # Use provided metadata or fall back to filename for title
-                pdf_title = metadata.get('title') or input_path.stem
-                pdf_author = metadata.get('author') or ''
-                pdf_subject = metadata.get('subject') or ''
-                pdf_keywords = metadata.get('keywords') or ''
+                pdf_metadata['title'] = metadata.get('title') or input_path.stem
+                pdf_metadata['author'] = metadata.get('author') or ''
+                pdf_metadata['subject'] = metadata.get('subject') or ''
+                pdf_metadata['keywords'] = metadata.get('keywords') or ''
             else:
                 # Default title to filename
-                pdf_title = input_path.stem
-                pdf_author = ''
-                pdf_subject = ''
-                pdf_keywords = ''
-
-            # Build meta tags for PDF metadata (WeasyPrint extracts these)
-            meta_tags = f'<title>{pdf_title}</title>\n'
-            if pdf_author:
-                meta_tags += f'    <meta name="author" content="{pdf_author}">\n'
-            if pdf_subject:
-                meta_tags += f'    <meta name="description" content="{pdf_subject}">\n'
-            if pdf_keywords:
-                meta_tags += f'    <meta name="keywords" content="{pdf_keywords}">\n'
+                pdf_metadata['title'] = input_path.stem
+                pdf_metadata['author'] = ''
+                pdf_metadata['subject'] = ''
+                pdf_metadata['keywords'] = ''
 
             # Create complete HTML document
             html_doc = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    {meta_tags}    <style>
+    <title>{pdf_metadata['title']}</title>
+    <style>
         {self.css}
     </style>
 </head>
@@ -137,11 +131,20 @@ class MarkdownConverter:
 </html>
 """
 
-            # Generate PDF (weasyprint embeds images by default)
+            # Generate PDF with metadata using Document API
             ensure_directory(output_path.parent)
-            HTML(string=html_doc, base_url=str(input_path.parent)).write_pdf(
-                output_path
-            )
+            document = HTML(string=html_doc, base_url=str(input_path.parent)).render()
+
+            # Set PDF metadata on document
+            document.metadata.title = pdf_metadata['title']
+            if pdf_metadata.get('author'):
+                document.metadata.authors = [pdf_metadata['author']]
+            if pdf_metadata.get('subject'):
+                document.metadata.description = pdf_metadata['subject']
+            if pdf_metadata.get('keywords'):
+                document.metadata.keywords = [kw.strip() for kw in pdf_metadata['keywords'].split(',')]
+
+            document.write_pdf(output_path)
 
         except InvalidMarkdownError:
             # Re-raise validation errors (including missing images)
