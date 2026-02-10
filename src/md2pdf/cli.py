@@ -62,6 +62,26 @@ def main(
         "--page-numbers/--no-page-numbers",
         help="Enable/disable page numbers in PDF footer (overrides .env)",
     ),
+    title: Optional[str] = typer.Option(
+        None,
+        "--title",
+        help="PDF title (overrides .env, defaults to filename)",
+    ),
+    author: Optional[str] = typer.Option(
+        None,
+        "--author",
+        help="PDF author (overrides .env)",
+    ),
+    subject: Optional[str] = typer.Option(
+        None,
+        "--subject",
+        help="PDF subject (overrides .env)",
+    ),
+    keywords: Optional[str] = typer.Option(
+        None,
+        "--keywords",
+        help="PDF keywords, comma-separated (overrides .env)",
+    ),
 ):
     """Convert markdown file(s) to PDF format.
 
@@ -102,6 +122,14 @@ def main(
     # Apply CLI overrides to config
     if page_numbers is not None:
         config.enable_page_numbers = page_numbers
+
+    # Build metadata dict (CLI overrides .env)
+    metadata = {
+        'title': title or config.pdf_title,
+        'author': author or config.pdf_author,
+        'subject': subject or config.pdf_subject,
+        'keywords': keywords or config.pdf_keywords,
+    }
 
     # Validate theme and css flags (mutually exclusive)
     if theme and css:
@@ -176,7 +204,7 @@ def main(
             task = progress.add_task(f"Converting {input_path.name}...", total=None)
 
             try:
-                converter.convert_file(input_path, output)
+                converter.convert_file(input_path, output, metadata=metadata)
                 progress.update(task, completed=True)
                 console.print(f"[green]✓[/green] Created: {output}")
                 sys.exit(0)
@@ -210,6 +238,7 @@ def main(
                 input_path,
                 output_dir,
                 preserve_structure,
+                metadata=metadata,
             )
 
             progress.update(task, completed=True)

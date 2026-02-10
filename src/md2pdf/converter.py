@@ -1,7 +1,7 @@
 """Core markdown to PDF conversion logic."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import markdown
 from weasyprint import HTML
@@ -55,12 +55,18 @@ class MarkdownConverter:
             # Backwards compatibility: generate default CSS
             self.css = get_default_css(config)
 
-    def convert_file(self, input_path: Path, output_path: Path) -> None:
+    def convert_file(
+        self,
+        input_path: Path,
+        output_path: Path,
+        metadata: Optional[Dict[str, Optional[str]]] = None
+    ) -> None:
         """Convert a single markdown file to PDF.
 
         Args:
             input_path: Path to the input markdown file.
             output_path: Path where the PDF should be saved.
+            metadata: Optional PDF metadata dict (title, author, subject, keywords).
 
         Raises:
             InvalidMarkdownError: If the markdown file cannot be read or parsed.
@@ -93,12 +99,35 @@ class MarkdownConverter:
             html_body = md.convert(markdown_content)
             md.reset()  # Reset parser state
 
+            # Build PDF metadata with smart defaults
+            if metadata:
+                # Use provided metadata or fall back to filename for title
+                pdf_title = metadata.get('title') or input_path.stem
+                pdf_author = metadata.get('author') or ''
+                pdf_subject = metadata.get('subject') or ''
+                pdf_keywords = metadata.get('keywords') or ''
+            else:
+                # Default title to filename
+                pdf_title = input_path.stem
+                pdf_author = ''
+                pdf_subject = ''
+                pdf_keywords = ''
+
+            # Build meta tags for PDF metadata (WeasyPrint extracts these)
+            meta_tags = f'<title>{pdf_title}</title>\n'
+            if pdf_author:
+                meta_tags += f'    <meta name="author" content="{pdf_author}">\n'
+            if pdf_subject:
+                meta_tags += f'    <meta name="description" content="{pdf_subject}">\n'
+            if pdf_keywords:
+                meta_tags += f'    <meta name="keywords" content="{pdf_keywords}">\n'
+
             # Create complete HTML document
             html_doc = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <style>
+    {meta_tags}    <style>
         {self.css}
     </style>
 </head>
@@ -125,6 +154,7 @@ class MarkdownConverter:
         input_dir: Path,
         output_dir: Path,
         preserve_structure: bool,
+        metadata: Optional[Dict[str, Optional[str]]] = None,
     ) -> list[dict]:
         """Convert all markdown files in a directory to PDF.
 
@@ -132,6 +162,7 @@ class MarkdownConverter:
             input_dir: Directory containing markdown files.
             output_dir: Directory where PDFs should be saved.
             preserve_structure: Whether to preserve directory structure.
+            metadata: Optional PDF metadata dict (title, author, subject, keywords).
 
         Returns:
             List of dictionaries with conversion results:
@@ -156,7 +187,7 @@ class MarkdownConverter:
             }
 
             try:
-                self.convert_file(md_file, output_path)
+                self.convert_file(md_file, output_path, metadata=metadata)
                 result["success"] = True
             except (InvalidMarkdownError, ConversionError) as e:
                 result["error"] = str(e)

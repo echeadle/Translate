@@ -186,3 +186,60 @@ class TestConverterWithCSS:
         converter.convert_file(md_file, output_file)
 
         assert output_file.exists()
+
+
+class TestConverterMetadata:
+    """Tests for PDF metadata in converter."""
+
+    def test_convert_with_metadata(self, mock_config, tmp_path):
+        """Test converter accepts and uses metadata."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test Document\n\nContent here.")
+
+        output_file = tmp_path / "output.pdf"
+
+        metadata = {
+            'title': 'Test Document',
+            'author': 'Test Author',
+            'subject': 'Test Subject',
+            'keywords': 'test, document',
+        }
+
+        converter.convert_file(md_file, output_file, metadata=metadata)
+
+        assert output_file.exists()
+        # Note: Actual metadata verification requires PDF inspection
+
+    def test_convert_with_partial_metadata(self, mock_config, tmp_path):
+        """Test converter with only some metadata fields."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        metadata = {
+            'title': 'Test Document',
+            'author': None,
+        }
+
+        converter.convert_file(md_file, output_file, metadata=metadata)
+
+        assert output_file.exists()
+
+    def test_convert_without_metadata(self, mock_config, tmp_path):
+        """Test converter defaults title to filename when no metadata."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "my_document.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        converter.convert_file(md_file, output_file, metadata=None)
+
+        assert output_file.exists()
+        # Title should default to "my_document" (filename without extension)
