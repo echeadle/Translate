@@ -3,6 +3,18 @@
 from md2pdf.config import Config
 
 
+def _escape_css_string(text: str) -> str:
+    """Escape special characters for CSS string literals.
+
+    Args:
+        text: Text to escape.
+
+    Returns:
+        Escaped text safe for CSS string literals.
+    """
+    return text.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
+
+
 def get_page_number_css(config: Config) -> str:
     """Generate CSS for page numbers in headers/footers.
 
@@ -22,6 +34,11 @@ def get_page_number_css(config: Config) -> str:
         "right": "@bottom-right",
     }
 
+    if config.page_number_position not in position_map:
+        raise ValueError(
+            f"Invalid page_number_position: {config.page_number_position}. "
+            f"Must be one of: {', '.join(position_map.keys())}"
+        )
     margin_box = position_map[config.page_number_position]
 
     # Convert format string to CSS content
@@ -33,19 +50,19 @@ def get_page_number_css(config: Config) -> str:
         if "{page}" in remaining:
             before, after = remaining.split("{page}", 1)
             if before:
-                content_parts.append(f'"{before}"')
+                content_parts.append(f'"{_escape_css_string(before)}"')
             content_parts.append('counter(page)')
             remaining = after
         elif "{pages}" in remaining:
             before, after = remaining.split("{pages}", 1)
             if before:
-                content_parts.append(f'"{before}"')
+                content_parts.append(f'"{_escape_css_string(before)}"')
             content_parts.append('counter(pages)')
             remaining = after
         else:
             # No more placeholders
             if remaining:
-                content_parts.append(f'"{remaining}"')
+                content_parts.append(f'"{_escape_css_string(remaining)}"')
             break
 
     content_value = " ".join(content_parts)

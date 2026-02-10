@@ -223,3 +223,33 @@ class TestPageNumberCSS:
         assert "@page" in css
         assert "@bottom-center" in css
         assert "counter(page)" in css
+
+    def test_get_page_number_css_plain_text(self, mock_config):
+        """Test format string with no placeholders."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_format = "Custom Footer Text"
+
+        css = get_page_number_css(mock_config)
+
+        assert '"Custom Footer Text"' in css
+        assert 'counter(' not in css
+        assert '@bottom-center' in css
+
+    def test_get_page_number_css_invalid_position(self, mock_config):
+        """Test error when position is invalid."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_position = "invalid"
+
+        with pytest.raises(ValueError, match="Invalid page_number_position"):
+            get_page_number_css(mock_config)
+
+    def test_get_page_number_css_escapes_special_chars(self, mock_config):
+        """Test that special characters are escaped in format string."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_format = 'Page "special" {page}'
+
+        css = get_page_number_css(mock_config)
+
+        # Should have escaped quote
+        assert r'\"' in css or '\\"' in css
+        assert 'counter(page)' in css
