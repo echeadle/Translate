@@ -3,10 +3,67 @@
 from md2pdf.config import Config
 
 
+def get_page_number_css(config: Config) -> str:
+    """Generate CSS for page numbers in headers/footers.
+
+    Args:
+        config: Configuration with page number settings.
+
+    Returns:
+        CSS string for @page margin boxes, or empty string if disabled.
+    """
+    if not config.enable_page_numbers:
+        return ""
+
+    # Map position to CSS margin box
+    position_map = {
+        "left": "@bottom-left",
+        "center": "@bottom-center",
+        "right": "@bottom-right",
+    }
+
+    margin_box = position_map[config.page_number_position]
+
+    # Convert format string to CSS content
+    # Split by placeholders and build content string
+    content_parts = []
+    remaining = config.page_number_format
+
+    while remaining:
+        if "{page}" in remaining:
+            before, after = remaining.split("{page}", 1)
+            if before:
+                content_parts.append(f'"{before}"')
+            content_parts.append('counter(page)')
+            remaining = after
+        elif "{pages}" in remaining:
+            before, after = remaining.split("{pages}", 1)
+            if before:
+                content_parts.append(f'"{before}"')
+            content_parts.append('counter(pages)')
+            remaining = after
+        else:
+            # No more placeholders
+            if remaining:
+                content_parts.append(f'"{remaining}"')
+            break
+
+    content_value = " ".join(content_parts)
+
+    return f"""
+    {margin_box} {{
+        content: {content_value};
+        font-size: 9pt;
+        color: #666;
+        font-family: Arial, sans-serif;
+    }}
+    """
+
+
 def get_page_css(config: Config) -> str:
     """Generate @page CSS from config.
 
-    Returns only page setup, not visual styling.
+    Returns only page setup and page numbers.
 
     Args:
         config: Configuration with page setup values.
@@ -14,6 +71,8 @@ def get_page_css(config: Config) -> str:
     Returns:
         CSS string for @page rules.
     """
+    page_number_css = get_page_number_css(config)
+
     return f"""
 @page {{
     size: {config.page_size};
@@ -21,6 +80,7 @@ def get_page_css(config: Config) -> str:
     margin-bottom: {config.margin_bottom};
     margin-left: {config.margin_left};
     margin-right: {config.margin_right};
+{page_number_css}
 }}
 """
 

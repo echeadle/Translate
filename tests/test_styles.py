@@ -2,7 +2,7 @@
 
 import pytest
 
-from md2pdf.styles import get_page_css, get_default_css
+from md2pdf.styles import get_page_css, get_default_css, get_page_number_css
 
 
 class TestPageCSS:
@@ -169,3 +169,57 @@ class TestStyles:
         assert "Helvetica, sans-serif" in css
         assert "10pt" in css
         assert "Consolas, monospace" in css
+
+
+class TestPageNumberCSS:
+    """Tests for page number CSS generation."""
+
+    def test_get_page_number_css_disabled(self, mock_config):
+        """Test no CSS when page numbers disabled."""
+        mock_config.enable_page_numbers = False
+        css = get_page_number_css(mock_config)
+        assert css == ""
+
+    def test_get_page_number_css_center(self, mock_config):
+        """Test page numbers in center position."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_position = "center"
+        mock_config.page_number_format = "Page {page} of {pages}"
+        css = get_page_number_css(mock_config)
+        assert "@bottom-center" in css
+        assert "counter(page)" in css
+        assert "counter(pages)" in css
+        assert "font-size: 9pt" in css
+        assert "color: #666" in css
+
+    def test_get_page_number_css_left(self, mock_config):
+        """Test page numbers in left position."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_position = "left"
+        css = get_page_number_css(mock_config)
+        assert "@bottom-left" in css
+
+    def test_get_page_number_css_right(self, mock_config):
+        """Test page numbers in right position."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_position = "right"
+        css = get_page_number_css(mock_config)
+        assert "@bottom-right" in css
+
+    def test_get_page_number_css_custom_format(self, mock_config):
+        """Test custom format string."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_format = "{page}/{pages}"
+        css = get_page_number_css(mock_config)
+        assert "counter(page)" in css
+        assert "counter(pages)" in css
+        assert 'content: counter(page) "/" counter(pages)' in css
+
+    def test_get_page_css_includes_page_numbers(self, mock_config):
+        """Test get_page_css includes page numbers when enabled."""
+        mock_config.enable_page_numbers = True
+        mock_config.page_number_position = "center"
+        css = get_page_css(mock_config)
+        assert "@page" in css
+        assert "@bottom-center" in css
+        assert "counter(page)" in css
