@@ -7,10 +7,13 @@ from typing import Any, Dict, List, Optional, Set
 
 import markdown
 from weasyprint import HTML
+from rich.console import Console
 
 from md2pdf.config import Config
 from md2pdf.styles import get_default_css
 from md2pdf.utils import ensure_directory, find_markdown_files, get_output_path
+
+console = Console()
 
 
 class MD2PDFError(Exception):
@@ -48,6 +51,7 @@ class MarkdownConverter:
             "tables",
             "codehilite",
             "nl2br",
+            "toc",  # Adds IDs to headers for TOC generation
         ]
 
         # Use provided CSS or generate default
@@ -61,6 +65,7 @@ class MarkdownConverter:
         self,
         input_path: Path,
         output_path: Path,
+        toc_enabled: bool = False,
         metadata: Optional[Dict[str, Optional[str]]] = None
     ) -> None:
         """Convert a single markdown file to PDF.
@@ -68,6 +73,7 @@ class MarkdownConverter:
         Args:
             input_path: Path to the input markdown file.
             output_path: Path where the PDF should be saved.
+            toc_enabled: Whether to generate a table of contents from H1/H2 headers.
             metadata: Optional PDF metadata dict (title, author, subject, keywords).
 
         Raises:
@@ -117,6 +123,33 @@ class MarkdownConverter:
                 pdf_metadata['subject'] = ''
                 pdf_metadata['keywords'] = ''
 
+            # Two-pass rendering if TOC enabled
+            if toc_enabled:
+                # Pass 1: Create initial HTML to extract headers
+                html_doc_pass1 = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{html.escape(pdf_metadata['title'], quote=True)}</title>
+    <style>
+        {self.css}
+    </style>
+</head>
+<body>
+    {html_body}
+</body>
+</html>
+"""
+                # Extract headers with page numbers
+                headers = self.extract_headers(html_doc_pass1, str(input_path.parent))
+
+                if not headers:
+                    console.print("[yellow]Warning:[/yellow] No H1/H2 headers found for TOC")
+                else:
+                    # Pass 2: Generate and prepend TOC
+                    toc_html = self.generate_toc_html(headers)
+                    html_body = toc_html + html_body
+
             # Create complete HTML document
             html_doc = f"""<!DOCTYPE html>
 <html>
@@ -159,6 +192,7 @@ class MarkdownConverter:
         input_dir: Path,
         output_dir: Path,
         preserve_structure: bool,
+        toc_enabled: bool = False,
         metadata: Optional[Dict[str, Optional[str]]] = None,
     ) -> list[dict]:
         """Convert all markdown files in a directory to PDF.
@@ -167,6 +201,7 @@ class MarkdownConverter:
             input_dir: Directory containing markdown files.
             output_dir: Directory where PDFs should be saved.
             preserve_structure: Whether to preserve directory structure.
+            toc_enabled: Whether to generate a table of contents from H1/H2 headers.
             metadata: Optional PDF metadata dict (title, author, subject, keywords).
 
         Returns:
@@ -192,7 +227,7 @@ class MarkdownConverter:
             }
 
             try:
-                self.convert_file(md_file, output_path, metadata=metadata)
+                self.convert_file(md_file, output_path, toc_enabled=toc_enabled, metadata=metadata)
                 result["success"] = True
             except (InvalidMarkdownError, ConversionError) as e:
                 result["error"] = str(e)
@@ -243,6 +278,106 @@ class MarkdownConverter:
         unique_id = f"{base_id}-{counter}"
         seen_ids.add(unique_id)
         return unique_id
+
+    def extract_headers(self, html_content: str, base_url: str) -> List[Dict[str, Any]]:
+        """Extract H1 and H2 headers with page numbers from rendered PDF.
+
+        Args:
+            html_content: HTML content to render.
+            base_url: Base URL for resolving relative paths.
+
+        Returns:
+            List of dicts with keys: text, level, page, anchor_id
+        """
+        from weasyprint import HTML
+        import re as regex
+
+        headers = []
+        seen_ids = set()
+
+        try:
+            # Parse HTML to extract header elements with their IDs using regex
+            # Match H1 and H2 tags with optional id attribute
+            h1_pattern = r'<h1(?:\s+id="([^"]*)")?[^>]*>(.*?)</h1>'
+            h2_pattern = r'<h2(?:\s+id="([^"]*)")?[^>]*>(.*?)</h2>'
+
+            header_elements = []
+
+            # Find all H1 headers
+            for match in regex.finditer(h1_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
+                anchor_id = match.group(1) or ''
+                text = regex.sub(r'<[^>]+>', '', match.group(2)).strip()  # Remove HTML tags
+
+                if text:
+                    if not anchor_id:
+                        anchor_id = self.generate_anchor_id(text, seen_ids)
+                    header_elements.append({
+                        'text': text,
+                        'level': 1,
+                        'anchor_id': anchor_id
+                    })
+
+            # Find all H2 headers
+            for match in regex.finditer(h2_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
+                anchor_id = match.group(1) or ''
+                text = regex.sub(r'<[^>]+>', '', match.group(2)).strip()  # Remove HTML tags
+
+                if text:
+                    if not anchor_id:
+                        anchor_id = self.generate_anchor_id(text, seen_ids)
+                    header_elements.append({
+                        'text': text,
+                        'level': 2,
+                        'anchor_id': anchor_id
+                    })
+
+            if not header_elements:
+                return []
+
+            # Render PDF to get page numbers from bookmarks
+            document = HTML(string=html_content, base_url=base_url)
+            rendered = document.render()
+
+            # Try to get bookmarks for page numbers
+            try:
+                bookmarks = rendered.make_bookmark_tree()
+                bookmark_pages = {}
+
+                # Build a map of bookmark labels to page numbers
+                for bookmark in bookmarks:
+                    if bookmark.destination:
+                        # destination is (page_number, x, y)
+                        page_num = bookmark.destination[0]
+                        bookmark_pages[bookmark.label] = page_num
+
+                # Match headers with bookmark pages
+                for header_info in header_elements:
+                    # Try to find matching bookmark by text
+                    page = bookmark_pages.get(header_info['text'], 1)
+
+                    headers.append({
+                        'text': header_info['text'],
+                        'level': header_info['level'],
+                        'page': page,
+                        'anchor_id': header_info['anchor_id'],
+                    })
+            except:
+                # Fallback: assign page 1 if bookmarks don't work
+                for header_info in header_elements:
+                    headers.append({
+                        'text': header_info['text'],
+                        'level': header_info['level'],
+                        'page': 1,  # Default to page 1 if we can't determine
+                        'anchor_id': header_info['anchor_id'],
+                    })
+
+        except Exception as e:
+            # If extraction fails, return empty list
+            # (TOC generation will be skipped)
+            console.print(f"[yellow]Warning:[/yellow] Could not extract headers: {e}")
+            return []
+
+        return headers
 
     def generate_toc_html(self, headers: List[Dict[str, Any]]) -> str:
         """Generate HTML for table of contents.

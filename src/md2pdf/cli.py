@@ -82,6 +82,11 @@ def main(
         "--keywords",
         help="PDF keywords, comma-separated (overrides .env)",
     ),
+    toc: bool = typer.Option(
+        False,
+        "--toc/--no-toc",
+        help="Generate table of contents from H1 and H2 headers",
+    ),
 ):
     """Convert markdown file(s) to PDF format.
 
@@ -204,7 +209,7 @@ def main(
             task = progress.add_task(f"Converting {input_path.name}...", total=None)
 
             try:
-                converter.convert_file(input_path, output, metadata=metadata)
+                converter.convert_file(input_path, output, toc_enabled=toc, metadata=metadata)
                 progress.update(task, completed=True)
                 console.print(f"[green]✓[/green] Created: {output}")
                 sys.exit(0)
@@ -238,6 +243,7 @@ def main(
                 input_path,
                 output_dir,
                 preserve_structure,
+                toc_enabled=toc,
                 metadata=metadata,
             )
 

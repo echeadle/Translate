@@ -126,3 +126,62 @@ class TestTOCGeneration:
         assert "alert('XSS')" not in html_output
         assert "&amp;" in html_output  # Ampersand escaped
         assert "&lt;" in html_output and "&gt;" in html_output
+
+
+class TestTwoPassRendering:
+    """Tests for two-pass TOC rendering."""
+
+    def test_convert_with_toc_flag(self, mock_config, tmp_path):
+        """Test conversion with toc_enabled=True."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("""# Introduction
+
+This is the introduction.
+
+## Overview
+
+An overview section.
+
+# Getting Started
+
+Getting started content.
+""")
+
+        output_file = tmp_path / "output.pdf"
+
+        # Convert with TOC enabled
+        converter.convert_file(md_file, output_file, toc_enabled=True)
+
+        assert output_file.exists()
+        # Note: Verifying TOC content requires PDF inspection
+        # which is tested in integration tests
+
+    def test_convert_without_toc(self, mock_config, tmp_path):
+        """Test normal conversion still works (backward compatibility)."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test\n\nContent")
+
+        output_file = tmp_path / "output.pdf"
+
+        # Convert without TOC (default)
+        converter.convert_file(md_file, output_file, toc_enabled=False)
+
+        assert output_file.exists()
+
+    def test_convert_toc_no_headers_warning(self, mock_config, tmp_path, capsys):
+        """Test warning when document has no headers."""
+        converter = MarkdownConverter(mock_config)
+
+        md_file = tmp_path / "test.md"
+        md_file.write_text("Just plain text with no headers.")
+
+        output_file = tmp_path / "output.pdf"
+
+        converter.convert_file(md_file, output_file, toc_enabled=True)
+
+        captured = capsys.readouterr()
+        assert "No H1/H2 headers found for TOC" in captured.out
