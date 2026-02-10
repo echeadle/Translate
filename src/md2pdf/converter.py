@@ -297,20 +297,36 @@ class MarkdownConverter:
 
         try:
             # Parse HTML to extract header elements with their IDs using regex
-            # Match H1 and H2 tags with optional id attribute
-            h1_pattern = r'<h1(?:\s+id="([^"]*)")?[^>]*>(.*?)</h1>'
-            h2_pattern = r'<h2(?:\s+id="([^"]*)")?[^>]*>(.*?)</h2>'
+            # Match H1 and H2 tags - capture content regardless of attribute order
+            h1_pattern = r'<h1\b[^>]*>(.*?)</h1>'
+            h2_pattern = r'<h2\b[^>]*>(.*?)</h2>'
+            # Pattern to extract id attribute from any position in tag
+            id_pattern = r'\bid="([^"]*)"'
 
             header_elements = []
 
             # Find all H1 headers
             for match in regex.finditer(h1_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
-                anchor_id = match.group(1) or ''
-                text = regex.sub(r'<[^>]+>', '', match.group(2)).strip()  # Remove HTML tags
+                # Extract the full opening tag to find id attribute
+                # match.start() points to '<h1', find the end of opening tag '>'
+                tag_end = html_content.find('>', match.start())
+                opening_tag = html_content[match.start():tag_end+1]
+
+                # Extract id attribute if present
+                id_match = regex.search(id_pattern, opening_tag)
+                anchor_id = id_match.group(1).strip() if id_match else ''
+
+                # Get header text (remove HTML tags)
+                text = regex.sub(r'<[^>]+>', '', match.group(1)).strip()
 
                 if text:
-                    if not anchor_id:
+                    # Validate ID format (must start with letter, contain only alphanumeric, underscore, hyphen)
+                    if anchor_id and regex.match(r'^[a-zA-Z][\w\-]*$', anchor_id):
+                        seen_ids.add(anchor_id)
+                    else:
+                        # Invalid or missing ID - generate new one
                         anchor_id = self.generate_anchor_id(text, seen_ids)
+
                     header_elements.append({
                         'text': text,
                         'level': 1,
@@ -319,12 +335,26 @@ class MarkdownConverter:
 
             # Find all H2 headers
             for match in regex.finditer(h2_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
-                anchor_id = match.group(1) or ''
-                text = regex.sub(r'<[^>]+>', '', match.group(2)).strip()  # Remove HTML tags
+                # Extract the full opening tag to find id attribute
+                # match.start() points to '<h2', find the end of opening tag '>'
+                tag_end = html_content.find('>', match.start())
+                opening_tag = html_content[match.start():tag_end+1]
+
+                # Extract id attribute if present
+                id_match = regex.search(id_pattern, opening_tag)
+                anchor_id = id_match.group(1).strip() if id_match else ''
+
+                # Get header text (remove HTML tags)
+                text = regex.sub(r'<[^>]+>', '', match.group(1)).strip()
 
                 if text:
-                    if not anchor_id:
+                    # Validate ID format (must start with letter, contain only alphanumeric, underscore, hyphen)
+                    if anchor_id and regex.match(r'^[a-zA-Z][\w\-]*$', anchor_id):
+                        seen_ids.add(anchor_id)
+                    else:
+                        # Invalid or missing ID - generate new one
                         anchor_id = self.generate_anchor_id(text, seen_ids)
+
                     header_elements.append({
                         'text': text,
                         'level': 2,
@@ -361,8 +391,9 @@ class MarkdownConverter:
                         'page': page,
                         'anchor_id': header_info['anchor_id'],
                     })
-            except:
+            except (AttributeError, ValueError, RuntimeError) as e:
                 # Fallback: assign page 1 if bookmarks don't work
+                console.print(f"[yellow]Warning:[/yellow] Could not extract bookmarks: {e}")
                 for header_info in header_elements:
                     headers.append({
                         'text': header_info['text'],
@@ -371,7 +402,7 @@ class MarkdownConverter:
                         'anchor_id': header_info['anchor_id'],
                     })
 
-        except Exception as e:
+        except (ValueError, AttributeError, RuntimeError) as e:
             # If extraction fails, return empty list
             # (TOC generation will be skipped)
             console.print(f"[yellow]Warning:[/yellow] Could not extract headers: {e}")

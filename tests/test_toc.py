@@ -59,6 +59,36 @@ class TestHeaderExtraction:
         assert result == "heading"
         assert "heading" in seen_ids
 
+    def test_extract_headers_id_attribute_ordering(self, mock_config):
+        """Test id attribute works regardless of position in tag."""
+        from md2pdf.converter import MarkdownConverter
+
+        converter = MarkdownConverter(mock_config)
+
+        # Test with id attribute NOT first
+        html = '<h1 class="big" data-foo="bar" id="test-id">Header</h1>'
+        headers = converter.extract_headers(html, "/tmp")
+
+        assert len(headers) == 1
+        assert headers[0]['anchor_id'] == 'test-id'
+        assert headers[0]['text'] == 'Header'
+        assert headers[0]['level'] == 1
+
+    def test_extract_headers_invalid_id_whitespace(self, mock_config):
+        """Test IDs with whitespace are regenerated."""
+        from md2pdf.converter import MarkdownConverter
+
+        converter = MarkdownConverter(mock_config)
+
+        # Test with invalid ID (contains spaces)
+        html = '<h1 id=" bad id ">Header Text</h1>'
+        headers = converter.extract_headers(html, "/tmp")
+
+        assert len(headers) == 1
+        assert ' ' not in headers[0]['anchor_id']
+        assert headers[0]['anchor_id'] == 'header-text'  # Auto-generated
+        assert headers[0]['text'] == 'Header Text'
+
 
 class TestTOCGeneration:
     """Test TOC HTML generation."""
