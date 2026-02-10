@@ -247,3 +247,50 @@ figcaption {
         text-decoration: underline;
     }
 }
+
+/* Table of Contents */
+.toc {
+    page-break-after: always;
+    margin-bottom: 24pt;
+}
+
+.toc h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 12pt;
+    text-align: center;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.toc li {
+    margin-bottom: 6pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.toc-h1 {
+    font-weight: bold;
+}
+
+.toc-h2 {
+    padding-left: 2em;
+    font-weight: normal;
+    font-style: italic;
+}
+
+.toc a {
+    flex-grow: 1;
+    text-decoration: underline;
+    color: #000000;
+}
+
+.toc-page {
+    margin-left: 1em;
+    font-weight: normal;
+    color: #000000;
+}

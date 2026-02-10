@@ -179,3 +179,53 @@ dd {
     margin-left: 2em;
     margin-bottom: 1em;
 }
+
+/* Table of Contents */
+.toc {
+    page-break-after: always;
+    margin-bottom: 3em;
+}
+
+.toc h1 {
+    font-size: 2em;
+    font-weight: 300;
+    margin-bottom: 1.5em;
+    letter-spacing: -0.02em;
+}
+
+.toc ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.toc li {
+    margin-bottom: 1em;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.toc-h1 {
+    font-weight: 400;
+}
+
+.toc-h2 {
+    padding-left: 2em;
+    font-weight: 300;
+}
+
+.toc a {
+    flex-grow: 1;
+    text-decoration: none;
+    color: #495057;
+}
+
+.toc a:hover {
+    color: #212529;
+}
+
+.toc-page {
+    margin-left: 1em;
+    font-weight: 300;
+    color: #6c757d;
+}
