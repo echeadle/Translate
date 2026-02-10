@@ -179,6 +179,118 @@ PDF_MARGIN_RIGHT=2.5cm
 
 These settings apply to all themes and custom CSS.
 
+## Advanced Features
+
+### Page Numbers
+
+Add page numbers to the footer of your PDFs.
+
+**Enable via .env:**
+
+```bash
+# .env
+ENABLE_PAGE_NUMBERS=true
+PAGE_NUMBER_POSITION=center  # Options: left, center, right
+PAGE_NUMBER_FORMAT=Page {page} of {pages}  # Customize format
+```
+
+**Enable via CLI:**
+
+```bash
+# Enable for single conversion
+uv run md2pdf document.md --page-numbers
+
+# Override .env setting
+uv run md2pdf document.md --no-page-numbers
+```
+
+**Format options:**
+- Use `{page}` for current page number
+- Use `{pages}` for total pages
+- Examples:
+  - `Page {page} of {pages}` → "Page 1 of 5"
+  - `{page}/{pages}` → "1/5"
+  - `- {page} -` → "- 1 -"
+
+### Table of Contents
+
+Generate a table of contents from H1 and H2 headers in your document.
+
+**Usage:**
+
+```bash
+# Generate TOC
+uv run md2pdf document.md --toc
+
+# Combine with other features
+uv run md2pdf document.md --toc --page-numbers --theme academic
+```
+
+**How it works:**
+- Extracts H1 and H2 headers from your document
+- Generates TOC at the beginning of the PDF
+- Includes clickable links to each section
+- Shows page numbers for each header
+- Styled to match your chosen theme
+
+**Tips:**
+- TOC works best with structured documents that use headers
+- Only H1 and H2 headers are included (not H3-H6)
+- TOC appears on separate pages before your content
+- Links in the TOC are clickable in PDF viewers
+
+### PDF Metadata
+
+Set document properties that appear in PDF viewers.
+
+**Configure via .env:**
+
+```bash
+# .env
+PDF_TITLE=User Guide
+PDF_AUTHOR=Jane Doe
+PDF_SUBJECT=Product Documentation
+PDF_KEYWORDS=guide, manual, help, tutorial
+```
+
+**Override via CLI:**
+
+```bash
+uv run md2pdf document.md \
+    --title "User Guide" \
+    --author "Jane Doe" \
+    --subject "Documentation" \
+    --keywords "guide, manual"
+```
+
+**Metadata fields:**
+- **Title**: Document title (defaults to filename if not set)
+- **Author**: Document author/creator
+- **Subject**: Document description/subject
+- **Keywords**: Comma-separated keywords for search
+
+**View metadata:**
+- Open PDF in viewer
+- Check Document Properties (usually in File menu)
+- Metadata appears in Properties dialog
+
+### Combining Features
+
+All Phase 4 features work together:
+
+```bash
+# Complete example: TOC + page numbers + metadata + theme
+uv run md2pdf report.md \
+    --toc \
+    --page-numbers \
+    --title "Annual Report 2024" \
+    --author "Company Name" \
+    --subject "Financial Report" \
+    --keywords "annual, report, financial" \
+    --theme academic \
+    --create-output-dir reports
+```
+
 ## Configuration
 
 Create a `.env` file to customize PDF styling:
