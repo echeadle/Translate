@@ -1,5 +1,10 @@
 # Markdown to PDF Converter
 
+![Python >= 3.11](https://img.shields.io/badge/python-%3E%3D3.11-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![Tests: 165 passing](https://img.shields.io/badge/tests-165%20passing-brightgreen)
+![Coverage: 97%](https://img.shields.io/badge/coverage-97%25-brightgreen)
+
 A Python command-line tool that converts markdown files to professional-looking PDFs.
 
 ## Features
@@ -159,7 +164,7 @@ Available configuration options:
 
 ## Testing
 
-This project includes a comprehensive test suite with 80%+ code coverage.
+This project includes a comprehensive test suite with 97% code coverage (165 tests).
 
 ### Run Tests
 
@@ -203,6 +208,7 @@ See [docs/TESTING.md](docs/TESTING.md) for detailed testing guide.
 - **Developer Guide**: [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)
 - **Project Structure**: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 - **Testing Guide**: [docs/TESTING.md](docs/TESTING.md)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
