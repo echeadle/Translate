@@ -229,3 +229,82 @@ class TestPageNumbersCLI:
 
         assert result.exit_code == 0
         assert output_file.exists()
+
+
+class TestMergeCLI:
+    """Tests for --merge CLI flag."""
+
+    def test_merge_directory(self, tmp_path):
+        """Test: md2pdf dir/ --merge → produces single merged PDF."""
+        input_dir = tmp_path / "docs"
+        input_dir.mkdir()
+        (input_dir / "a.md").write_text("# Alpha\n\nFirst file.")
+        (input_dir / "b.md").write_text("# Beta\n\nSecond file.")
+        (input_dir / "c.md").write_text("# Gamma\n\nThird file.")
+
+        output_file = tmp_path / "merged.pdf"
+
+        result = runner.invoke(
+            app,
+            [str(input_dir), "--merge", "--output", str(output_file)],
+        )
+
+        assert result.exit_code == 0
+        assert output_file.exists()
+        assert output_file.stat().st_size > 0
+
+    def test_merge_with_file_input_error(self, tmp_path):
+        """Test: --merge + file → error."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Test")
+
+        result = runner.invoke(app, [str(md_file), "--merge"])
+
+        assert result.exit_code == 1
+        assert "directory" in result.stdout.lower()
+
+    def test_merge_with_toc_and_metadata(self, tmp_path):
+        """Test: --merge with --toc and metadata flags."""
+        input_dir = tmp_path / "book"
+        input_dir.mkdir()
+        (input_dir / "ch1.md").write_text("# Chapter 1\n\nIntro.")
+        (input_dir / "ch2.md").write_text("# Chapter 2\n\n## Details\n\nBody.")
+
+        output_file = tmp_path / "book.pdf"
+
+        result = runner.invoke(
+            app,
+            [
+                str(input_dir),
+                "--merge",
+                "--toc",
+                "--output", str(output_file),
+                "--title", "My Book",
+                "--author", "Author Name",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert output_file.exists()
+
+    def test_merge_default_output_name(self, tmp_path):
+        """Test: --merge without --output uses dir name + _merged.pdf."""
+        input_dir = tmp_path / "chapters"
+        input_dir.mkdir()
+        (input_dir / "a.md").write_text("# A")
+
+        result = runner.invoke(app, [str(input_dir), "--merge"])
+
+        assert result.exit_code == 0
+        # Should mention the merged file in output
+        assert "merged" in result.stdout.lower() or "1 file" in result.stdout.lower()
+
+    def test_merge_empty_directory(self, tmp_path):
+        """Test: --merge on directory with no .md files."""
+        empty_dir = tmp_path / "empty"
+        empty_dir.mkdir()
+
+        result = runner.invoke(app, [str(empty_dir), "--merge"])
+
+        assert result.exit_code == 0
+        assert "no markdown" in result.stdout.lower()

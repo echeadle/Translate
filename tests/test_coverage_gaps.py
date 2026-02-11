@@ -212,7 +212,7 @@ class TestConverterH2InvalidID:
 <h2 id="123invalid">Some Section</h2>
 </body></html>"""
 
-        headers = converter.extract_headers(html_content, "/tmp")
+        headers = converter.extract_headers(html_content)
 
         # Should have both headers
         assert len(headers) == 2

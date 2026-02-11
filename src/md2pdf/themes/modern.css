@@ -378,8 +378,44 @@ pre, table, img {
     border-bottom: 1px solid #3182ce;
 }
 
-.toc-page {
+.toc a::after {
+    content: target-counter(attr(href url), page);
     margin-left: 1em;
     font-weight: 600;
     color: #4a5568;
+}
+
+/* Title Page */
+.title-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+.title-page h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    margin-bottom: 0.5em;
+    color: #0f172a;
+    border-bottom: 4px solid transparent;
+    border-image: linear-gradient(to right, #3b82f6, #8b5cf6, #ec4899) 1;
+    padding-bottom: 0.3em;
+    letter-spacing: -0.02em;
+}
+
+.title-page .author {
+    font-size: 16pt;
+    font-weight: 500;
+    color: #1e40af;
+    margin-bottom: 0.5em;
+}
+
+.title-page .date {
+    font-size: 12pt;
+    font-weight: 500;
+    color: #64748b;
 }

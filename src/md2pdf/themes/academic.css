@@ -289,8 +289,40 @@ figcaption {
     color: #000000;
 }
 
-.toc-page {
+.toc a::after {
+    content: target-counter(attr(href url), page);
     margin-left: 1em;
+    font-weight: normal;
+    color: #000000;
+}
+
+/* Title Page */
+.title-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+.title-page h1 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-bottom: 24pt;
+    text-align: center;
+}
+
+.title-page .author {
+    font-size: 14pt;
+    font-weight: normal;
+    color: #000000;
+    margin-bottom: 12pt;
+}
+
+.title-page .date {
+    font-size: 12pt;
     font-weight: normal;
     color: #000000;
 }

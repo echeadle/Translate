@@ -212,9 +212,40 @@ em {
     text-decoration: underline;
 }
 
-.toc-page {
+.toc a::after {
+    content: target-counter(attr(href url), page);
     margin-left: 1em;
     font-weight: 400;
     color: #666;
     font-size: 0.9em;
+}
+
+/* Title Page */
+.title-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+.title-page h1 {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    border-bottom: 2px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+.title-page .author {
+    font-size: 1.2em;
+    color: #586069;
+    margin-bottom: 0.5em;
+}
+
+.title-page .date {
+    font-size: 1em;
+    color: #6a737d;
 }

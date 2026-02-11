@@ -33,11 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 #### Advanced Features (Phase 4)
 - Page numbers with configurable position (left/center/right) and format
 - Table of Contents generation from H1/H2 headers with clickable links
+- Title page with document title, author, and date (`--title-page`)
 - PDF metadata support (title, author, subject, keywords) via CLI and `.env`
-- TOC styled per-theme across all 5 built-in themes
-- HTML escaping for security in TOC headers and PDF titles
+- TOC and title page styled per-theme across all 5 built-in themes
+- HTML escaping for security in TOC headers, title page, and PDF titles
 
 #### Testing & Quality (Phase 5)
-- 165 tests with 97% code coverage
+- 187 tests with 97% code coverage
 - Comprehensive test suite covering all modules
 - Unit, integration, and edge case tests

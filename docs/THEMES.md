@@ -91,6 +91,17 @@ uv run md2pdf document.md --theme dark
 uv run md2pdf document.md --theme modern
 ```
 
+## Title Page & TOC Styling
+
+All 5 built-in themes include matching styles for both title pages and table of contents. When you use `--title-page` or `--toc`, the output automatically matches your chosen theme.
+
+If you use custom CSS (`--css`), you'll need to add `.title-page` and `.toc` styles yourself. Copy them from any built-in theme as a starting point:
+
+```bash
+# View the CSS for a theme
+cat src/md2pdf/themes/github.css
+```
+
 ## Custom CSS
 
 ### Using Custom CSS

@@ -2,6 +2,7 @@
 
 import html
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -66,7 +67,8 @@ class MarkdownConverter:
         input_path: Path,
         output_path: Path,
         toc_enabled: bool = False,
-        metadata: Optional[Dict[str, Optional[str]]] = None
+        metadata: Optional[Dict[str, Optional[str]]] = None,
+        title_page_enabled: bool = False,
     ) -> None:
         """Convert a single markdown file to PDF.
 
@@ -75,6 +77,7 @@ class MarkdownConverter:
             output_path: Path where the PDF should be saved.
             toc_enabled: Whether to generate a table of contents from H1/H2 headers.
             metadata: Optional PDF metadata dict (title, author, subject, keywords).
+            title_page_enabled: Whether to add a title page before content.
 
         Raises:
             InvalidMarkdownError: If the markdown file cannot be read or parsed.
@@ -123,32 +126,20 @@ class MarkdownConverter:
                 pdf_metadata['subject'] = ''
                 pdf_metadata['keywords'] = ''
 
-            # Two-pass rendering if TOC enabled
+            # Generate TOC if enabled (single-pass: CSS target-counter resolves page numbers)
             if toc_enabled:
-                # Pass 1: Create initial HTML to extract headers
-                html_doc_pass1 = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>{html.escape(pdf_metadata['title'], quote=True)}</title>
-    <style>
-        {self.css}
-    </style>
-</head>
-<body>
-    {html_body}
-</body>
-</html>
-"""
-                # Extract headers with page numbers
-                headers = self.extract_headers(html_doc_pass1, str(input_path.parent))
+                headers = self.extract_headers(html_body)
 
                 if not headers:
                     console.print("[yellow]Warning:[/yellow] No H1/H2 headers found for TOC")
                 else:
-                    # Pass 2: Generate and prepend TOC
                     toc_html = self.generate_toc_html(headers)
                     html_body = toc_html + html_body
+
+            # Prepend title page (before TOC and content)
+            if title_page_enabled:
+                title_page_html = self.generate_title_page_html(pdf_metadata)
+                html_body = title_page_html + html_body
 
             # Create complete HTML document
             html_doc = f"""<!DOCTYPE html>
@@ -187,6 +178,145 @@ class MarkdownConverter:
         except Exception as e:
             raise ConversionError(f"Error converting {input_path} to PDF: {e}")
 
+    def convert_merge(
+        self,
+        input_paths: list[Path],
+        output_path: Path,
+        toc_enabled: bool = False,
+        metadata: Optional[Dict[str, Optional[str]]] = None,
+        title_page_enabled: bool = False,
+    ) -> None:
+        """Merge multiple markdown files into a single PDF.
+
+        Args:
+            input_paths: Ordered list of markdown file paths.
+            output_path: Path where the merged PDF should be saved.
+            toc_enabled: Whether to generate a unified table of contents.
+            metadata: Optional PDF metadata dict (title, author, subject, keywords).
+            title_page_enabled: Whether to add a title page before content.
+
+        Raises:
+            InvalidMarkdownError: If any markdown file cannot be read or parsed.
+            ConversionError: If PDF generation fails.
+        """
+        if not input_paths:
+            raise InvalidMarkdownError("No markdown files provided for merging")
+
+        try:
+            from md2pdf.image_extension import ImagePathExtension
+
+            html_bodies: list[str] = []
+
+            for path in input_paths:
+                try:
+                    content = path.read_text(encoding="utf-8")
+                except FileNotFoundError:
+                    raise InvalidMarkdownError(f"File not found: {path}")
+                except Exception as e:
+                    raise InvalidMarkdownError(f"Error reading {path}: {e}")
+
+                image_ext = ImagePathExtension(source_file=path)
+                extensions = self.base_extensions.copy()
+                extensions.append(image_ext)
+
+                md = markdown.Markdown(extensions=extensions, extension_configs={})
+                html_bodies.append(md.convert(content))
+                md.reset()
+
+            # Join with page breaks between files
+            combined_html = '<div style="page-break-before: always;"></div>'.join(
+                html_bodies
+            )
+
+            # Build PDF metadata
+            pdf_metadata: Dict[str, str] = {}
+            if metadata:
+                pdf_metadata["title"] = metadata.get("title") or output_path.stem
+                pdf_metadata["author"] = metadata.get("author") or ""
+                pdf_metadata["subject"] = metadata.get("subject") or ""
+                pdf_metadata["keywords"] = metadata.get("keywords") or ""
+            else:
+                pdf_metadata["title"] = output_path.stem
+                pdf_metadata["author"] = ""
+                pdf_metadata["subject"] = ""
+                pdf_metadata["keywords"] = ""
+
+            # Generate unified TOC across all files
+            if toc_enabled:
+                headers = self.extract_headers(combined_html)
+                if not headers:
+                    console.print(
+                        "[yellow]Warning:[/yellow] No H1/H2 headers found for TOC"
+                    )
+                else:
+                    toc_html = self.generate_toc_html(headers)
+                    combined_html = toc_html + combined_html
+
+            # Prepend title page (before TOC and content)
+            if title_page_enabled:
+                title_page_html = self.generate_title_page_html(pdf_metadata)
+                combined_html = title_page_html + combined_html
+
+            # Build complete HTML document
+            html_doc = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{html.escape(pdf_metadata['title'], quote=True)}</title>
+    <style>
+        {self.css}
+    </style>
+</head>
+<body>
+    {combined_html}
+</body>
+</html>
+"""
+
+            # Use common parent directory as base_url for image resolution
+            base_dir = input_paths[0].parent
+            for p in input_paths[1:]:
+                # Find the common ancestor directory
+                try:
+                    base_dir.relative_to(p.parent)
+                except ValueError:
+                    try:
+                        p.parent.relative_to(base_dir)
+                    except ValueError:
+                        # Walk up to common parent
+                        parts_a = base_dir.parts
+                        parts_b = p.parent.parts
+                        common = []
+                        for a, b in zip(parts_a, parts_b):
+                            if a == b:
+                                common.append(a)
+                            else:
+                                break
+                        base_dir = Path(*common) if common else base_dir
+
+            ensure_directory(output_path.parent)
+            document = HTML(
+                string=html_doc, base_url=str(base_dir)
+            ).render()
+
+            # Set PDF metadata
+            document.metadata.title = pdf_metadata["title"]
+            if pdf_metadata.get("author"):
+                document.metadata.authors = [pdf_metadata["author"]]
+            if pdf_metadata.get("subject"):
+                document.metadata.description = pdf_metadata["subject"]
+            if pdf_metadata.get("keywords"):
+                document.metadata.keywords = [
+                    kw.strip() for kw in pdf_metadata["keywords"].split(",")
+                ]
+
+            document.write_pdf(output_path)
+
+        except InvalidMarkdownError:
+            raise
+        except Exception as e:
+            raise ConversionError(f"Error merging files to PDF: {e}")
+
     def convert_directory(
         self,
         input_dir: Path,
@@ -194,6 +324,7 @@ class MarkdownConverter:
         preserve_structure: bool,
         toc_enabled: bool = False,
         metadata: Optional[Dict[str, Optional[str]]] = None,
+        title_page_enabled: bool = False,
     ) -> list[dict]:
         """Convert all markdown files in a directory to PDF.
 
@@ -203,6 +334,7 @@ class MarkdownConverter:
             preserve_structure: Whether to preserve directory structure.
             toc_enabled: Whether to generate a table of contents from H1/H2 headers.
             metadata: Optional PDF metadata dict (title, author, subject, keywords).
+            title_page_enabled: Whether to add a title page before content.
 
         Returns:
             List of dictionaries with conversion results:
@@ -227,7 +359,12 @@ class MarkdownConverter:
             }
 
             try:
-                self.convert_file(md_file, output_path, toc_enabled=toc_enabled, metadata=metadata)
+                self.convert_file(
+                    md_file, output_path,
+                    toc_enabled=toc_enabled,
+                    metadata=metadata,
+                    title_page_enabled=title_page_enabled,
+                )
                 result["success"] = True
             except (InvalidMarkdownError, ConversionError) as e:
                 result["error"] = str(e)
@@ -279,143 +416,65 @@ class MarkdownConverter:
         seen_ids.add(unique_id)
         return unique_id
 
-    def extract_headers(self, html_content: str, base_url: str) -> List[Dict[str, Any]]:
-        """Extract H1 and H2 headers with page numbers from rendered PDF.
+    def extract_headers(self, html_content: str) -> List[Dict[str, Any]]:
+        """Extract H1 and H2 headers from HTML in document order.
+
+        Page numbers are resolved at render time via CSS target-counter,
+        so this method only extracts text, level, and anchor IDs.
 
         Args:
-            html_content: HTML content to render.
-            base_url: Base URL for resolving relative paths.
+            html_content: HTML content to parse.
 
         Returns:
-            List of dicts with keys: text, level, page, anchor_id
+            List of dicts with keys: text, level, anchor_id
         """
-        from weasyprint import HTML
-        import re as regex
-
         headers = []
-        seen_ids = set()
+        seen_ids: Set[str] = set()
 
-        try:
-            # Parse HTML to extract header elements with their IDs using regex
-            # Match H1 and H2 tags - capture content regardless of attribute order
-            h1_pattern = r'<h1\b[^>]*>(.*?)</h1>'
-            h2_pattern = r'<h2\b[^>]*>(.*?)</h2>'
-            # Pattern to extract id attribute from any position in tag
-            id_pattern = r'\bid="([^"]*)"'
+        # Combined pattern to find H1 and H2 tags in document order
+        pattern = r'<(h[12])\b([^>]*)>(.*?)</\1>'
+        id_pattern = r'\bid="([^"]*)"'
 
-            header_elements = []
+        for match in re.finditer(pattern, html_content, re.IGNORECASE | re.DOTALL):
+            tag = match.group(1).lower()
+            attrs = match.group(2)
+            content = match.group(3)
 
-            # Find all H1 headers
-            for match in regex.finditer(h1_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
-                # Extract the full opening tag to find id attribute
-                # match.start() points to '<h1', find the end of opening tag '>'
-                tag_end = html_content.find('>', match.start())
-                opening_tag = html_content[match.start():tag_end+1]
+            level = int(tag[1])
 
-                # Extract id attribute if present
-                id_match = regex.search(id_pattern, opening_tag)
-                anchor_id = id_match.group(1).strip() if id_match else ''
+            # Extract id attribute if present
+            id_match = re.search(id_pattern, attrs)
+            anchor_id = id_match.group(1).strip() if id_match else ''
 
-                # Get header text (remove HTML tags)
-                text = regex.sub(r'<[^>]+>', '', match.group(1)).strip()
+            # Get header text (strip nested HTML tags, unescape HTML entities)
+            text = html.unescape(re.sub(r'<[^>]+>', '', content).strip())
 
-                if text:
-                    # Validate ID format (must start with letter, contain only alphanumeric, underscore, hyphen)
-                    if anchor_id and regex.match(r'^[a-zA-Z][\w\-]*$', anchor_id):
-                        seen_ids.add(anchor_id)
-                    else:
-                        # Invalid or missing ID - generate new one
-                        anchor_id = self.generate_anchor_id(text, seen_ids)
+            if not text:
+                continue
 
-                    header_elements.append({
-                        'text': text,
-                        'level': 1,
-                        'anchor_id': anchor_id
-                    })
+            # Validate ID format or generate a new one
+            if anchor_id and re.match(r'^[a-zA-Z][\w\-]*$', anchor_id):
+                seen_ids.add(anchor_id)
+            else:
+                anchor_id = self.generate_anchor_id(text, seen_ids)
 
-            # Find all H2 headers
-            for match in regex.finditer(h2_pattern, html_content, regex.IGNORECASE | regex.DOTALL):
-                # Extract the full opening tag to find id attribute
-                # match.start() points to '<h2', find the end of opening tag '>'
-                tag_end = html_content.find('>', match.start())
-                opening_tag = html_content[match.start():tag_end+1]
-
-                # Extract id attribute if present
-                id_match = regex.search(id_pattern, opening_tag)
-                anchor_id = id_match.group(1).strip() if id_match else ''
-
-                # Get header text (remove HTML tags)
-                text = regex.sub(r'<[^>]+>', '', match.group(1)).strip()
-
-                if text:
-                    # Validate ID format (must start with letter, contain only alphanumeric, underscore, hyphen)
-                    if anchor_id and regex.match(r'^[a-zA-Z][\w\-]*$', anchor_id):
-                        seen_ids.add(anchor_id)
-                    else:
-                        # Invalid or missing ID - generate new one
-                        anchor_id = self.generate_anchor_id(text, seen_ids)
-
-                    header_elements.append({
-                        'text': text,
-                        'level': 2,
-                        'anchor_id': anchor_id
-                    })
-
-            if not header_elements:
-                return []
-
-            # Render PDF to get page numbers from bookmarks
-            document = HTML(string=html_content, base_url=base_url)
-            rendered = document.render()
-
-            # Try to get bookmarks for page numbers
-            try:
-                bookmarks = rendered.make_bookmark_tree()
-                bookmark_pages = {}
-
-                # Build a map of bookmark labels to page numbers
-                for bookmark in bookmarks:
-                    if bookmark.destination:
-                        # destination is (page_number, x, y)
-                        page_num = bookmark.destination[0]
-                        bookmark_pages[bookmark.label] = page_num
-
-                # Match headers with bookmark pages
-                for header_info in header_elements:
-                    # Try to find matching bookmark by text
-                    page = bookmark_pages.get(header_info['text'], 1)
-
-                    headers.append({
-                        'text': header_info['text'],
-                        'level': header_info['level'],
-                        'page': page,
-                        'anchor_id': header_info['anchor_id'],
-                    })
-            except (AttributeError, ValueError, RuntimeError) as e:
-                # Fallback: assign page 1 if bookmarks don't work
-                console.print(f"[yellow]Warning:[/yellow] Could not extract bookmarks: {e}")
-                for header_info in header_elements:
-                    headers.append({
-                        'text': header_info['text'],
-                        'level': header_info['level'],
-                        'page': 1,  # Default to page 1 if we can't determine
-                        'anchor_id': header_info['anchor_id'],
-                    })
-
-        except (ValueError, AttributeError, RuntimeError) as e:
-            # If extraction fails, return empty list
-            # (TOC generation will be skipped)
-            console.print(f"[yellow]Warning:[/yellow] Could not extract headers: {e}")
-            return []
+            headers.append({
+                'text': text,
+                'level': level,
+                'anchor_id': anchor_id,
+            })
 
         return headers
 
     def generate_toc_html(self, headers: List[Dict[str, Any]]) -> str:
         """Generate HTML for table of contents.
 
+        Page numbers are rendered via CSS target-counter(attr(href url), page)
+        so no page number spans are emitted here.
+
         Args:
             headers: List of header dicts from extract_headers().
-                Each dict has keys: text, level, page, anchor_id
+                Each dict has keys: text, level, anchor_id
 
         Returns:
             HTML string for TOC, or empty string if no headers.
@@ -431,10 +490,31 @@ class MarkdownConverter:
             css_class = f"toc-h{header['level']}"
             toc_html += f'        <li class="{css_class}">\n'
             toc_html += f'            <a href="#{header["anchor_id"]}">{html.escape(header["text"])}</a>\n'
-            toc_html += f'            <span class="toc-page">{html.escape(str(header["page"]))}</span>\n'
             toc_html += '        </li>\n'
 
         toc_html += '    </ul>\n'
         toc_html += '</div>\n'
 
         return toc_html
+
+    def generate_title_page_html(self, metadata: Dict[str, Optional[str]]) -> str:
+        """Generate HTML for a title page.
+
+        Args:
+            metadata: Dict with keys title, author (both optional).
+
+        Returns:
+            HTML string for the title page with page break after.
+        """
+        title = metadata.get('title') or 'Untitled'
+        author = metadata.get('author') or ''
+        date_str = datetime.now().strftime("%B %d, %Y")
+
+        title_html = '<div class="title-page">\n'
+        title_html += f'    <h1>{html.escape(title)}</h1>\n'
+        if author:
+            title_html += f'    <p class="author">{html.escape(author)}</p>\n'
+        title_html += f'    <p class="date">{html.escape(date_str)}</p>\n'
+        title_html += '</div>\n'
+
+        return title_html

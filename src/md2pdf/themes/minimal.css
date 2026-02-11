@@ -224,8 +224,41 @@ dd {
     color: #212529;
 }
 
-.toc-page {
+.toc a::after {
+    content: target-counter(attr(href url), page);
     margin-left: 1em;
+    font-weight: 300;
+    color: #6c757d;
+}
+
+/* Title Page */
+.title-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    text-align: center;
+}
+
+.title-page h1 {
+    font-size: 32pt;
+    font-weight: 300;
+    margin-bottom: 0.8em;
+    letter-spacing: -0.02em;
+    border-bottom: none;
+}
+
+.title-page .author {
+    font-size: 14pt;
+    font-weight: 300;
+    color: #495057;
+    margin-bottom: 0.5em;
+}
+
+.title-page .date {
+    font-size: 12pt;
     font-weight: 300;
     color: #6c757d;
 }

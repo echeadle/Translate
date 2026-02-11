@@ -14,6 +14,7 @@ from md2pdf.config import Config
 from md2pdf.converter import ConversionError, InvalidMarkdownError, MarkdownConverter
 from md2pdf.themes import get_theme_css, load_custom_css
 from md2pdf.styles import get_page_css
+from md2pdf.utils import find_markdown_files
 
 console = Console()
 
@@ -87,6 +88,16 @@ def main(
         "--toc/--no-toc",
         help="Generate table of contents from H1 and H2 headers",
     ),
+    merge: bool = typer.Option(
+        False,
+        "--merge/--no-merge",
+        help="Merge all markdown files in a directory into a single PDF",
+    ),
+    title_page: bool = typer.Option(
+        False,
+        "--title-page/--no-title-page",
+        help="Add a title page with document title, author, and date",
+    ),
 ):
     """Convert markdown file(s) to PDF format.
 
@@ -101,20 +112,14 @@ def main(
         # Convert to timestamped subdirectory
         md2pdf document.md --create-output-dir auto
 
-        # Convert to named subdirectory
-        md2pdf document.md --create-output-dir my_pdfs
-
         # Convert entire directory
         md2pdf docs/
 
-        # Convert directory with automatic subdirectory (keeps things organized)
-        md2pdf docs/ --create-output-dir auto
+        # Add title page, TOC, and page numbers
+        md2pdf document.md --title-page --toc --page-numbers --title "My Report" --author "Jane"
 
-        # Convert directory with custom output location
-        md2pdf docs/ --output-dir pdfs/
-
-        # Flatten directory structure
-        md2pdf docs/ --no-preserve-structure
+        # Merge directory into single PDF with title page
+        md2pdf docs/ --merge --title-page --toc --title "User Guide" --theme academic
     """
     try:
         # Load configuration
@@ -183,8 +188,26 @@ def main(
 
         output_dir = base_output / subdir_name
 
+    # Validate --merge flag
+    if merge:
+        if input_path.is_file():
+            console.print(
+                "[red]Error:[/red] --merge requires a directory input, not a file"
+            )
+            raise typer.Exit(1)
+        if output_dir is not None and create_output_dir is None:
+            console.print(
+                "[red]Error:[/red] Use --output with --merge instead of --output-dir"
+            )
+            raise typer.Exit(1)
+
     # Determine if input is file or directory
     if input_path.is_file():
+        if merge:
+            # Already handled above, but guard against edge cases
+            console.print("[red]Error:[/red] --merge requires a directory input")
+            raise typer.Exit(1)
+
         # Single file mode
         if output_dir is not None and create_output_dir is None:
             console.print(
@@ -209,7 +232,7 @@ def main(
             task = progress.add_task(f"Converting {input_path.name}...", total=None)
 
             try:
-                converter.convert_file(input_path, output, toc_enabled=toc, metadata=metadata)
+                converter.convert_file(input_path, output, toc_enabled=toc, metadata=metadata, title_page_enabled=title_page)
                 progress.update(task, completed=True)
                 console.print(f"[green]✓[/green] Created: {output}")
                 sys.exit(0)
@@ -219,7 +242,55 @@ def main(
                 sys.exit(1)
 
     elif input_path.is_dir():
-        # Directory mode
+        # Merge mode: combine all markdown files into one PDF
+        if merge:
+            md_files = find_markdown_files(input_path)
+            if not md_files:
+                console.print("[yellow]No markdown files found.[/yellow]")
+                sys.exit(0)
+
+            # Determine output path
+            if output is not None:
+                merge_output = output
+            elif output_dir is not None:
+                merge_output = output_dir / f"{input_path.name}_merged.pdf"
+            else:
+                merge_output = (
+                    Path(config.default_output_dir) / f"{input_path.name}_merged.pdf"
+                )
+
+            console.print(
+                f"Merging [cyan]{len(md_files)}[/cyan] markdown file(s) "
+                f"from [cyan]{input_path}[/cyan]..."
+            )
+
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console,
+            ) as progress:
+                task = progress.add_task("Merging files...", total=None)
+
+                try:
+                    converter.convert_merge(
+                        md_files,
+                        merge_output,
+                        toc_enabled=toc,
+                        metadata=metadata,
+                        title_page_enabled=title_page,
+                    )
+                    progress.update(task, completed=True)
+                    console.print(
+                        f"[green]✓[/green] Merged {len(md_files)} file(s) into: "
+                        f"{merge_output}"
+                    )
+                    sys.exit(0)
+                except (InvalidMarkdownError, ConversionError) as e:
+                    progress.update(task, completed=True)
+                    console.print(f"[red]✗ Error:[/red] {e}")
+                    sys.exit(1)
+
+        # Directory mode (individual PDFs)
         if output is not None:
             console.print(
                 "[yellow]Warning:[/yellow] --output is ignored in directory mode"
@@ -245,6 +316,7 @@ def main(
                 preserve_structure,
                 toc_enabled=toc,
                 metadata=metadata,
+                title_page_enabled=title_page,
             )
 
             progress.update(task, completed=True)

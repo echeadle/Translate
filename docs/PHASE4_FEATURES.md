@@ -1,14 +1,15 @@
 # Phase 4 Features Guide
 
-Comprehensive guide to Phase 4 advanced features: page numbers, table of contents, and PDF metadata.
+Comprehensive guide to Phase 4 advanced features: page numbers, table of contents, title page, and PDF metadata.
 
 ## Overview
 
-Phase 4 adds three professional document features while maintaining md2pdf's simplicity:
+Phase 4 adds four professional document features while maintaining md2pdf's simplicity:
 
 1. **Page Numbers** - Configurable footer page numbers
 2. **Table of Contents** - Auto-generated from document headers
-3. **PDF Metadata** - Document properties (title, author, etc.)
+3. **Title Page** - Professional cover page with title, author, and date
+4. **PDF Metadata** - Document properties (title, author, etc.)
 
 All features are:
 - **Opt-in** - Enable only what you need
@@ -150,6 +151,65 @@ Each theme styles the TOC to match its aesthetic:
 - **Dark**: Light text on dark background
 - **Modern**: Colorful accents, gradient background
 
+## Title Page
+
+### Quick Start
+
+```bash
+# Add title page
+uv run md2pdf document.md --title-page --title "User Guide" --author "Jane Doe"
+```
+
+### How It Works
+
+1. **Generates a full-page title** before all other content
+2. **Displays three elements:**
+   - **Title** - From `--title` or `.env` (falls back to "Untitled")
+   - **Author** - From `--author` or `.env` (omitted if empty)
+   - **Date** - Auto-generated in "Month DD, YYYY" format
+3. **Page break after** - Content starts on the next page
+
+### Rendering Order
+
+When combined with TOC: **Title Page → TOC → Content**
+
+### Examples
+
+```bash
+# Basic title page
+uv run md2pdf report.md --title-page --title "Annual Report"
+
+# Title page with author
+uv run md2pdf report.md --title-page --title "Annual Report" --author "Company Name"
+
+# Complete professional document
+uv run md2pdf report.md --title-page --toc --page-numbers --title "Annual Report" --author "Company Name" --theme academic
+
+# Merged document with title page
+uv run md2pdf docs/ --merge --title-page --toc --title "User Guide" --author "Team"
+```
+
+### Theme Styling
+
+Each theme styles the title page to match its aesthetic:
+
+- **GitHub**: Clean with subtle border below title
+- **Minimal**: Light weight fonts, generous spacing
+- **Academic**: Formal, serif, centered
+- **Dark**: Dark background with light text
+- **Modern**: Gradient accent border matching modern style
+
+### Edge Cases
+
+**No title provided:**
+- Falls back to "Untitled"
+
+**No author provided:**
+- Author line is omitted entirely
+
+**Special characters in title/author:**
+- Automatically escaped for security (HTML escaping)
+
 ## PDF Metadata
 
 ### Quick Start
@@ -229,8 +289,9 @@ EOF
 All features work together seamlessly:
 
 ```bash
-# Professional report
+# Professional report with title page
 uv run md2pdf annual_report.md \
+    --title-page \
     --toc \
     --page-numbers \
     --title "Annual Report 2024" \
@@ -240,6 +301,7 @@ uv run md2pdf annual_report.md \
 
 # User documentation
 uv run md2pdf user_guide.md \
+    --title-page \
     --toc \
     --page-numbers \
     --title "User Guide v2.0" \
@@ -247,14 +309,18 @@ uv run md2pdf user_guide.md \
     --keywords "guide, manual, tutorial" \
     --theme github
 
-# Technical documentation with minimal theme
-uv run md2pdf api_docs.md \
+# Merged technical docs with title page
+uv run md2pdf api_docs/ \
+    --merge \
+    --title-page \
     --toc \
     --page-numbers \
     --title "API Documentation" \
     --subject "Developer Guide" \
     --theme minimal
 ```
+
+**Rendering order:** Title Page → Table of Contents → Content (with page numbers)
 
 ## Best Practices
 
@@ -281,6 +347,19 @@ uv run md2pdf api_docs.md \
 
 **Not recommended:**
 - Single-page documents
+
+### When to Use Title Page
+
+**Good use cases:**
+- Reports and formal documents
+- Books and merged multi-file documents
+- Documents for distribution
+- Any document with clear title and author
+
+**Not recommended:**
+- Quick notes or drafts
+- Single-page documents
+- Internal working documents
 
 ### Metadata Tips
 
@@ -309,6 +388,15 @@ A: They're automatically sanitized for valid HTML anchor IDs.
 **Q: Can I disable TOC for certain sections?**
 A: No. TOC includes all H1 and H2 headers. Use H3-H6 for sections you want to exclude.
 
+**Q: Can I customize the title page date format?**
+A: Not yet. The date uses "Month DD, YYYY" format (e.g., "February 11, 2026").
+
+**Q: Does the title page affect page numbering?**
+A: Yes. The title page is page 1, so your content starts on a later page number.
+
+**Q: What happens if I use --title-page without --title?**
+A: The title falls back to "Untitled". Set a title with `--title` or `PDF_TITLE` in `.env`.
+
 ## Troubleshooting
 
 **TOC links don't work:**
@@ -327,6 +415,12 @@ A: No. TOC includes all H1 and H2 headers. Use H3-H6 for sections you want to ex
 **TOC styling looks wrong:**
 - Ensure using one of the 5 built-in themes
 - Custom CSS may need TOC styles added
+
+**Title page shows "Untitled":**
+- Set a title with `--title "Your Title"` or `PDF_TITLE` in `.env`
+
+**Title page author is missing:**
+- Author is only shown if provided via `--author` or `PDF_AUTHOR` in `.env`
 
 ## See Also
 

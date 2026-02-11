@@ -264,3 +264,83 @@ class TestConverterMetadata:
         converter.convert_file(md_file, output_file, metadata=metadata)
         assert output_file.exists()
         assert output_file.stat().st_size > 0
+
+
+class TestMergeConversion:
+    """Tests for merge conversion (multiple markdown files → one PDF)."""
+
+    def test_convert_merge_basic(self, converter, tmp_path):
+        """Test merging three markdown files into one PDF."""
+        files = []
+        for i, title in enumerate(["Alpha", "Beta", "Gamma"]):
+            md = tmp_path / f"file{i}.md"
+            md.write_text(f"# {title}\n\nContent for {title}.")
+            files.append(md)
+
+        output = tmp_path / "merged.pdf"
+        converter.convert_merge(files, output)
+
+        assert output.exists()
+        assert output.stat().st_size > 0
+        # Valid PDF header
+        assert output.read_bytes()[:4] == b"%PDF"
+
+    def test_convert_merge_empty_list(self, converter, tmp_path):
+        """Test that merging an empty list raises an error."""
+        output = tmp_path / "merged.pdf"
+
+        with pytest.raises(InvalidMarkdownError, match="No markdown files"):
+            converter.convert_merge([], output)
+
+    def test_convert_merge_single_file(self, converter, tmp_path):
+        """Test merging a single file works fine."""
+        md = tmp_path / "only.md"
+        md.write_text("# Solo\n\nJust one file.")
+
+        output = tmp_path / "merged.pdf"
+        converter.convert_merge([md], output)
+
+        assert output.exists()
+        assert output.stat().st_size > 0
+
+    def test_convert_merge_with_toc(self, converter, tmp_path):
+        """Test merged PDF has unified TOC from all files."""
+        file_a = tmp_path / "a.md"
+        file_a.write_text("# Chapter One\n\n## Section 1.1\n\nText.")
+
+        file_b = tmp_path / "b.md"
+        file_b.write_text("# Chapter Two\n\n## Section 2.1\n\nMore text.")
+
+        output = tmp_path / "merged.pdf"
+        converter.convert_merge([file_a, file_b], output, toc_enabled=True)
+
+        assert output.exists()
+        assert output.stat().st_size > 0
+
+    def test_convert_merge_with_metadata(self, converter, tmp_path):
+        """Test merged PDF respects metadata."""
+        md = tmp_path / "test.md"
+        md.write_text("# Test\n\nContent.")
+
+        output = tmp_path / "merged.pdf"
+        metadata = {
+            "title": "Merged Document",
+            "author": "Test Author",
+            "subject": None,
+            "keywords": None,
+        }
+        converter.convert_merge([md], output, metadata=metadata)
+
+        assert output.exists()
+
+    def test_convert_merge_missing_file(self, converter, tmp_path):
+        """Test merging with a missing file raises error."""
+        valid = tmp_path / "valid.md"
+        valid.write_text("# Valid")
+
+        missing = tmp_path / "missing.md"
+
+        output = tmp_path / "merged.pdf"
+
+        with pytest.raises(InvalidMarkdownError, match="File not found"):
+            converter.convert_merge([valid, missing], output)

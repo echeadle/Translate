@@ -2,7 +2,7 @@
 
 ![Python >= 3.11](https://img.shields.io/badge/python-%3E%3D3.11-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
-![Tests: 165 passing](https://img.shields.io/badge/tests-165%20passing-brightgreen)
+![Tests: 187 passing](https://img.shields.io/badge/tests-187%20passing-brightgreen)
 ![Coverage: 97%](https://img.shields.io/badge/coverage-97%25-brightgreen)
 
 A Python command-line tool that converts markdown files to professional-looking PDFs.
@@ -12,10 +12,17 @@ A Python command-line tool that converts markdown files to professional-looking 
 - Convert single markdown files or entire directories
 - **Auto-organize output** with timestamped or named subdirectories (keeps originals and PDFs separate!)
 - Professional PDF styling with configurable fonts and margins
-- Support for code blocks, tables, lists, headers, and more
+- 5 built-in themes (github, minimal, academic, dark, modern) + custom CSS
+- **Title page** with document title, author, and date
+- **Table of contents** with clickable links and page numbers
+- **Page numbers** with configurable position and format
+- **PDF metadata** (title, author, subject, keywords)
+- **Merge** multiple markdown files into a single PDF
+- Support for code blocks, tables, lists, headers, images, and more
 - Directory structure preservation option
 - Beautiful terminal output with progress indicators
 - Configuration via `.env` file
+- Web app (Streamlit) for browser-based conversion
 
 ## Installation
 
@@ -126,6 +133,18 @@ uv run md2pdf document.md --toc
 uv run md2pdf document.md --toc --page-numbers --theme academic
 ```
 
+### Title Page
+
+Add a professional title page showing title, author, and date:
+
+```bash
+# Add title page
+uv run md2pdf document.md --title-page --title "My Report" --author "Jane Doe"
+
+# Combine with TOC for a complete document
+uv run md2pdf document.md --title-page --toc --page-numbers --theme academic
+```
+
 ### PDF Metadata
 
 Set PDF document properties:
@@ -143,6 +162,20 @@ echo "PDF_TITLE=User Guide" >> .env
 echo "PDF_AUTHOR=Your Name" >> .env
 uv run md2pdf document.md
 ```
+
+### Web App
+
+A browser-based interface is available via Streamlit:
+
+```bash
+# Install with web extras
+uv sync --extra web
+
+# Launch the web app
+uv run streamlit run src/md2pdf/app.py
+```
+
+Upload `.md` files, pick a theme, toggle title page / TOC / page numbers, and download PDFs — no command line required.
 
 ## Configuration
 
@@ -164,7 +197,7 @@ Available configuration options:
 
 ## Testing
 
-This project includes a comprehensive test suite with 97% code coverage (165 tests).
+This project includes a comprehensive test suite with 97% code coverage (187 tests).
 
 ### Run Tests
 

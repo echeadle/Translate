@@ -239,6 +239,33 @@ uv run md2pdf document.md --toc --page-numbers --theme academic
 - TOC appears on separate pages before your content
 - Links in the TOC are clickable in PDF viewers
 
+### Title Page
+
+Add a professional title page as the first page of your PDF.
+
+**Usage:**
+
+```bash
+# Add title page
+uv run md2pdf document.md --title-page --title "My Report" --author "Jane Doe"
+
+# Title page with TOC and page numbers
+uv run md2pdf document.md --title-page --toc --page-numbers
+
+# Title page with theme
+uv run md2pdf document.md --title-page --title "User Guide" --theme modern
+```
+
+**How it works:**
+- Displays document title, author, and current date on a full page
+- Title comes from `--title` flag or `.env` (falls back to "Untitled")
+- Author comes from `--author` flag or `.env` (omitted if empty)
+- Date is auto-generated in "Month DD, YYYY" format
+- Centered vertically on the page with a page break after
+- Styled to match your chosen theme
+
+**Rendering order:** Title Page → TOC (if enabled) → Content
+
 ### PDF Metadata
 
 Set document properties that appear in PDF viewers.
@@ -276,11 +303,12 @@ uv run md2pdf document.md \
 
 ### Combining Features
 
-All Phase 4 features work together:
+All advanced features work together:
 
 ```bash
-# Complete example: TOC + page numbers + metadata + theme
+# Complete example: title page + TOC + page numbers + metadata + theme
 uv run md2pdf report.md \
+    --title-page \
     --toc \
     --page-numbers \
     --title "Annual Report 2024" \
@@ -290,6 +318,8 @@ uv run md2pdf report.md \
     --theme academic \
     --create-output-dir reports
 ```
+
+This produces a PDF with: title page → table of contents → content, all with page numbers and academic styling.
 
 ## Configuration
 
