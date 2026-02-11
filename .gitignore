@@ -36,8 +36,10 @@ examples/converted/
 
 # Testing
 .coverage
+coverage.json
 htmlcov/
 .pytest_cache/
+.env.test
 
 # Git worktrees
 .worktrees/
@@ -55,3 +57,7 @@ htmlcov/
 # OS
 .DS_Store
 Thumbs.db
+
+#My Additions
+future/
+openai_ai_agents/
