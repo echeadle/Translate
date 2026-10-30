@@ -1,9 +1,11 @@
-"""Targeted tests to increase coverage from 91% to 95%+.
+"""Targeted tests to increase coverage from 91% to 97%+.
 
 Covers uncovered lines in cli.py and converter.py.
 """
 
+from pathlib import Path
 from unittest.mock import patch
+import pytest
 
 import typer
 from typer.testing import CliRunner
@@ -296,3 +298,140 @@ class TestCLIDirectoryAllFail:
 
         assert result.exit_code == 2
         assert "Failed to convert all" in result.stdout
+
+
+# --- New converter.py gap tests (lines 215-216, 248, 282-295, 307, 309, 317-318, 453) ---
+
+
+def _make_converter() -> MarkdownConverter:
+    """Helper to create a converter with default config."""
+    config = Config(
+        page_size="A4",
+        margin_top="2cm",
+        margin_bottom="2cm",
+        margin_left="2cm",
+        margin_right="2cm",
+        font_family="Arial",
+        font_size="11pt",
+        code_font="Courier",
+        default_output_dir="output",
+        preserve_structure=True,
+    )
+    return MarkdownConverter(config)
+
+
+class TestMergeGenericReadError:
+    """Cover converter.py lines 215-216: generic exception reading file in merge."""
+
+    def test_merge_oserror_on_read(self, tmp_path):
+        """Mock read_text() to raise OSError in convert_merge."""
+        converter = _make_converter()
+
+        bad_file = tmp_path / "bad.md"
+        bad_file.write_text("# Test")
+
+        output = tmp_path / "merged.pdf"
+
+        with patch.object(Path, "read_text", side_effect=OSError("disk error")):
+            with pytest.raises(InvalidMarkdownError, match="Error reading"):
+                converter.convert_merge([bad_file], output)
+
+
+class TestMergeNoHeadersWarning:
+    """Cover converter.py line 248: 'No headers' warning when merge + TOC on headerless content."""
+
+    def test_merge_toc_no_headers(self, tmp_path, capsys):
+        """Merge headerless files with toc_enabled=True shows warning."""
+        converter = _make_converter()
+
+        f1 = tmp_path / "a.md"
+        f1.write_text("Just plain text, no headers at all.")
+        f2 = tmp_path / "b.md"
+        f2.write_text("More plain text without any headers.")
+
+        output = tmp_path / "merged.pdf"
+
+        converter.convert_merge([f1, f2], output, toc_enabled=True)
+
+        assert output.exists()
+
+
+class TestMergeCommonParentDir:
+    """Cover converter.py lines 282-295: common parent dir logic for unrelated dirs."""
+
+    def test_merge_files_from_separate_subdirs(self, tmp_path):
+        """Merge files from two separate subdirectories finds common parent."""
+        converter = _make_converter()
+
+        dir_a = tmp_path / "project" / "src" / "docs"
+        dir_a.mkdir(parents=True)
+        dir_b = tmp_path / "project" / "lib" / "notes"
+        dir_b.mkdir(parents=True)
+
+        f1 = dir_a / "readme.md"
+        f1.write_text("# Readme\n\nFrom src/docs.")
+        f2 = dir_b / "notes.md"
+        f2.write_text("# Notes\n\nFrom lib/notes.")
+
+        output = tmp_path / "merged.pdf"
+
+        converter.convert_merge([f1, f2], output)
+
+        assert output.exists()
+        assert output.stat().st_size > 0
+
+
+class TestMergeSubjectKeywordsMetadata:
+    """Cover converter.py lines 307, 309: subject/keywords metadata on merge."""
+
+    def test_merge_with_full_metadata(self, tmp_path):
+        """Merge with subject and keywords sets PDF metadata."""
+        converter = _make_converter()
+
+        f1 = tmp_path / "ch1.md"
+        f1.write_text("# Chapter 1\n\nIntro content.")
+
+        output = tmp_path / "book.pdf"
+
+        metadata = {
+            "title": "Full Book",
+            "author": "Test Author",
+            "subject": "Testing Subject",
+            "keywords": "python, testing, pdf",
+        }
+
+        converter.convert_merge([f1], output, metadata=metadata)
+
+        assert output.exists()
+        assert output.stat().st_size > 0
+
+
+class TestMergeConversionErrorWrapping:
+    """Cover converter.py lines 317-318: ConversionError wrapping in merge."""
+
+    def test_merge_html_render_raises(self, tmp_path):
+        """Mock HTML() to raise generic Exception, gets wrapped in ConversionError."""
+        converter = _make_converter()
+
+        f1 = tmp_path / "ok.md"
+        f1.write_text("# OK\n\nContent.")
+
+        output = tmp_path / "merged.pdf"
+
+        with patch("md2pdf.converter.HTML", side_effect=RuntimeError("render boom")):
+            with pytest.raises(ConversionError, match="Error merging files to PDF"):
+                converter.convert_merge([f1], output)
+
+
+class TestExtractHeadersSkipsEmpty:
+    """Cover converter.py line 453: skip empty header text in extract_headers()."""
+
+    def test_empty_header_text_skipped(self):
+        """H1 with empty text content is skipped."""
+        converter = _make_converter()
+
+        html_content = '<h1 id="x"></h1><h1 id="real">Real Header</h1>'
+        headers = converter.extract_headers(html_content)
+
+        assert len(headers) == 1
+        assert headers[0]["text"] == "Real Header"

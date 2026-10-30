@@ -1,11 +1,13 @@
 """Tests for CLI interface."""
 
 from pathlib import Path
+from unittest.mock import patch
 
 import typer
 from typer.testing import CliRunner
 
 from md2pdf.cli import main
+from md2pdf.converter import ConversionError
 
 
 # Create a Typer app for testing
@@ -308,3 +310,53 @@ class TestMergeCLI:
 
         assert result.exit_code == 0
         assert "no markdown" in result.stdout.lower()
+
+    def test_merge_with_output_dir_error(self, tmp_path):
+        """Test: --merge + --output-dir (without --create-output-dir) → error."""
+        input_dir = tmp_path / "docs"
+        input_dir.mkdir()
+        (input_dir / "a.md").write_text("# A")
+
+        result = runner.invoke(
+            app,
+            [str(input_dir), "--merge", "--output-dir", str(tmp_path / "out")],
+        )
+
+        assert result.exit_code == 1
+        assert "--output" in result.stdout.lower()
+
+    def test_merge_default_output_with_create_output_dir(self, tmp_path, monkeypatch):
+        """Test: --merge + --create-output-dir auto (no --output) uses subdir."""
+        input_dir = tmp_path / "chapters"
+        input_dir.mkdir()
+        (input_dir / "ch1.md").write_text("# Chapter 1\n\nContent.")
+
+        monkeypatch.chdir(tmp_path)
+
+        result = runner.invoke(
+            app,
+            [str(input_dir), "--merge", "--create-output-dir", "auto"],
+        )
+
+        assert result.exit_code == 0
+        assert "merged" in result.stdout.lower()
+
+    def test_merge_conversion_error(self, tmp_path):
+        """Test: merge error handling wraps ConversionError properly."""
+        input_dir = tmp_path / "docs"
+        input_dir.mkdir()
+        (input_dir / "a.md").write_text("# A\n\nContent")
+
+        output_file = tmp_path / "merged.pdf"
+
+        with patch(
+            "md2pdf.cli.MarkdownConverter.convert_merge",
+            side_effect=ConversionError("Mock merge failure"),
+        ):
+            result = runner.invoke(
+                app,
+                [str(input_dir), "--merge", "--output", str(output_file)],
+            )
+
+        assert result.exit_code == 1
+        assert "error" in result.stdout.lower()
